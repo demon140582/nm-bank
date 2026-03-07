@@ -1,0 +1,4661 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NM-Bank</title>
+  <style>
+    :root {
+      --bg: #080615;
+      --bg-soft: #14112b;
+      --card: #1a1538;
+      --line: #3f2e84;
+      --line-soft: #2c2460;
+      --text: #f0ebff;
+      --muted: #b7abd9;
+      --accent1: #8f43ff;
+      --accent2: #386bff;
+      --accent3: #47c9ff;
+      --good: #39f1b3;
+      --bad: #ff5d9c;
+      --warn: #ffd36f;
+      --shadow: 0 14px 30px rgba(7, 5, 22, 0.55);
+      --r: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 5%, rgba(143,67,255,0.26), transparent 36%),
+        radial-gradient(circle at 96% 12%, rgba(56,107,255,0.24), transparent 42%),
+        radial-gradient(circle at 50% 100%, rgba(71,201,255,0.10), transparent 35%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1200px, 94vw);
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
+        linear-gradient(130deg, rgba(143,67,255,0.10), rgba(56,107,255,0.08));
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .hidden { display: none !important; }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .muted { color: var(--muted); }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    }
+
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn.secondary { background: linear-gradient(135deg, #574a91, #324174); }
+    .btn.danger { background: linear-gradient(135deg, #ff5d9c, #d93f74); }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 12px;
+      background: #100d24;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #8f93ff;
+      box-shadow: 0 0 0 3px rgba(143, 147, 255, 0.22);
+    }
+
+    .pw-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .pw-wrap input {
+      padding-right: 92px;
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid #4f5ca0;
+      background: #1d2350;
+      color: #dce8ff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .pw-toggle:hover {
+      border-color: #8f93ff;
+    }
+
+    .pw-toggle.active {
+      background: #2a356f;
+      border-color: #9bb7ff;
+    }
+
+    .row { display: grid; gap: 12px; }
+    .row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .auth-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      width: min(520px, 95vw);
+      display: grid;
+      gap: 14px;
+    }
+
+    .auth-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .auth-page { display: grid; gap: 12px; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+
+    .online {
+      background: #161134;
+      border: 1px solid #41357a;
+      border-radius: 10px;
+      padding: 8px 10px;
+      color: #9cc9ff;
+      font-size: 14px;
+    }
+
+    .user-badge {
+      background: #161134;
+      border: 1px solid #41357a;
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-self: end;
+    }
+
+    .notify-btn {
+      position: relative;
+      border: 1px solid #41357a;
+      background: #161134;
+      color: #dce8ff;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .notify-panel {
+      position: fixed;
+      right: 14px;
+      top: 56px;
+      width: min(420px, 94vw);
+      max-height: calc(100vh - 180px);
+      z-index: 1001;
+      background: #151136;
+      border: 1px solid #4a3c8f;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .notify-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #3b2f79;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notify-list {
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .notify-item {
+      border: 1px solid #3b2f79;
+      border-radius: 10px;
+      padding: 10px;
+      background: #191443;
+    }
+
+    .notify-item.unread {
+      border-color: #8f93ff;
+      box-shadow: 0 0 0 1px rgba(143, 147, 255, 0.24) inset;
+    }
+
+    .balance-pill {
+      background: #161134;
+      border: 1px solid #41357a;
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: #9ffff0;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--line);
+      background: #141033;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .tab-btn:hover { border-color: #6e5bc1; }
+    .tab-btn.active {
+      border-color: #8f93ff;
+      background: linear-gradient(135deg, rgba(143,67,255,0.30), rgba(56,107,255,0.24));
+      box-shadow: 0 0 16px rgba(127, 117, 255, 0.26);
+    }
+
+    .tab { display: none; }
+    .tab.active { display: grid; gap: 12px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .chart-wrap canvas { width: 100%; height: 220px; }
+
+    .achievement-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .achievement-item {
+      background: #17123a;
+      border: 1px solid #372d73;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .vip-0 { color: #b8c2d6; }
+    .vip-1 { color: #cd7f32; }
+    .vip-2 { color: #c0c0c0; }
+    .vip-3 { color: #ffd700; }
+    .vip-4 { color: #59bfff; }
+
+    .game-result {
+      margin-top: 12px;
+      border: 1px solid #3f357f;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: .4px;
+      transition: all .25s ease;
+      min-height: 52px;
+      display: grid;
+      place-items: center;
+    }
+
+    .game-result.win {
+      border-color: #2ee58a;
+      color: #9dffd0;
+      box-shadow: 0 0 18px rgba(46, 229, 138, .45);
+    }
+
+    .game-result.lose {
+      border-color: #ff5d73;
+      color: #ffb8c2;
+      box-shadow: 0 0 18px rgba(255, 93, 115, .45);
+      animation: shake .32s ease;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #352f66;
+      text-align: left;
+      padding: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      background: #18133d;
+      border: 1px solid #4d4192;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: .22s ease;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.good { border-color: #2ee58a; }
+    .toast.bad { border-color: #ff5d73; }
+
+    .admin-tools { display: grid; gap: 10px; }
+
+    .admin-subtabs .tab-btn {
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+
+    .admin-tab { display: none; }
+    .admin-tab.active { display: grid; gap: 10px; }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      font-weight: 700;
+      color: #130f2d;
+      background: linear-gradient(135deg, #a97bff, #71d7ff);
+      border: 1px solid #463a88;
+      flex: 0 0 auto;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .webview-frame {
+      width: 100%;
+      height: min(74vh, 820px);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #100d24;
+      overflow: hidden;
+    }
+
+    .messenger-mode-switch {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .messenger-mode-btn {
+      border: 1px solid #4b3f8e;
+      background: #18133d;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: .2s ease;
+      font-weight: 600;
+    }
+
+    .messenger-mode-btn:hover {
+      border-color: #8f93ff;
+      transform: translateY(-1px);
+    }
+
+    .messenger-mode-btn.active {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .messenger-mode {
+      display: none;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .messenger-mode.active {
+      display: grid;
+    }
+
+    .messenger-left-layout {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .messenger-side-tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 560px;
+      border: 1px solid #2a3f67;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #10233f, #0c1b32);
+      padding: 6px;
+    }
+
+    .messenger-side-tab-btn {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: transparent;
+      color: #a9c1ee;
+      min-height: 64px;
+      padding: 7px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+      text-align: center;
+      line-height: 1.15;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 4px;
+    }
+
+    .ms-nav-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .ms-nav-text {
+      font-size: 10px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .messenger-side-tab-btn:hover {
+      background: rgba(108, 143, 205, 0.16);
+      color: #e4efff;
+    }
+
+    .messenger-side-tab-btn.active {
+      border-color: #58a8ff;
+      background: linear-gradient(135deg, rgba(38, 113, 207, 0.42), rgba(76, 185, 255, 0.32));
+      color: #ffffff;
+      box-shadow: 0 0 0 1px rgba(88, 168, 255, 0.2) inset;
+    }
+
+    .messenger-side-create-btn {
+      margin-top: auto;
+      border-color: #66b4ff;
+      background: linear-gradient(135deg, rgba(43, 132, 224, 0.56), rgba(71, 187, 255, 0.46));
+      color: #ffffff;
+    }
+
+    .messenger-side-create-btn:hover {
+      border-color: #8fd3ff;
+      box-shadow: 0 0 18px rgba(90, 178, 255, 0.28);
+    }
+
+    .messenger-side-panels {
+      min-width: 0;
+      border: 1px solid #2a3f67;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #122643, #10223c);
+      padding: 8px;
+    }
+
+    .messenger-side-panel .messenger-box {
+      background: #10203a;
+      border-color: #2c426d;
+    }
+
+    .messenger-side-panel .messenger-list {
+      max-height: 182px;
+    }
+
+    .messenger-side-panel {
+      display: none;
+      gap: 10px;
+    }
+
+    .messenger-side-panel.active {
+      display: grid;
+    }
+
+    .messenger-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 12px;
+      min-height: 560px;
+    }
+
+    .messenger-col {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .messenger-box {
+      border: 1px solid #3c3475;
+      border-radius: 10px;
+      background: #17123a;
+      padding: 10px;
+    }
+
+    .messenger-list {
+      margin-top: 8px;
+      max-height: 220px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+    }
+
+    .messenger-list-item {
+      border: 1px solid #3e3679;
+      border-radius: 10px;
+      padding: 8px;
+      background: #1a1542;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .messenger-list-item:hover {
+      border-color: #7982ff;
+    }
+
+    .messenger-list-item.active {
+      border-color: #62c7ff;
+      box-shadow: 0 0 0 2px rgba(98, 199, 255, 0.18) inset;
+    }
+
+    .messenger-dialog-wrap {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      min-height: 560px;
+    }
+
+    .messenger-dialog-messages {
+      border: 1px solid #3c3475;
+      border-radius: 10px;
+      background: #17123a;
+      padding: 10px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+      max-height: 420px;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .msg-bubble {
+      border: 1px solid #3d3478;
+      border-radius: 10px;
+      background: #1e1949;
+      padding: 8px 10px;
+      max-width: min(84%, 800px);
+    }
+
+    .msg-row.me {
+      justify-content: flex-end;
+    }
+
+    .msg-row.me .msg-bubble {
+      border-color: #6070ff;
+      background: #24205a;
+    }
+
+    .messenger-call-log {
+      margin-top: 8px;
+      max-height: 120px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .call-status {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #b9c8e9;
+    }
+
+    .call-preview {
+      margin-top: 8px;
+      width: 100%;
+      height: 170px;
+      border: 1px solid #3e4f82;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0e1730;
+      display: grid;
+      place-items: center;
+      color: #8ea4d1;
+      font-size: 13px;
+    }
+
+    .call-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #0a1020;
+    }
+
+    .call-controls {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .call-device-row {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-block;
+      border: 1px solid #463a88;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      color: #cfc3f5;
+    }
+
+    .support-toggle {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 1000;
+      border-radius: 999px;
+      width: 52px;
+      height: 52px;
+      border: 0;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      box-shadow: var(--shadow);
+      font-size: 22px;
+    }
+
+    .support-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: #ff5d73;
+      color: #fff;
+      font-size: 11px;
+      display: grid;
+      place-items: center;
+      padding: 0 5px;
+    }
+
+    .support-widget {
+      position: fixed;
+      right: 14px;
+      bottom: 74px;
+      width: min(390px, 94vw);
+      height: 460px;
+      z-index: 1000;
+      background: #151136;
+      border: 1px solid #4a3c8f;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .support-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid #3b2f79;
+    }
+
+    .support-messages {
+      padding: 10px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .support-msg {
+      border: 1px solid #3c3475;
+      border-radius: 10px;
+      padding: 8px;
+      background: #17123a;
+    }
+
+    .support-msg.admin {
+      border-color: #7b8cff;
+      background: #1f1a4f;
+    }
+
+    @media (max-width: 1024px) {
+      .row.cols-3 { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr; }
+      .top-right { justify-self: start; }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        width: min(100%, 100vw);
+        padding: 12px 10px 22px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+
+      .row.cols-2,
+      .row.cols-3,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-right {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .tab-btn {
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
+
+      .notify-panel {
+        left: 8px;
+        right: 8px;
+        width: auto;
+        top: 54px;
+        max-height: calc(100vh - 190px);
+      }
+
+      .support-widget {
+        left: 8px;
+        right: 8px;
+        width: auto;
+        bottom: 66px;
+        height: 62vh;
+      }
+
+      .support-toggle {
+        right: 10px;
+        bottom: 10px;
+      }
+
+      .webview-frame {
+        height: 62vh;
+      }
+
+      .messenger-grid {
+        grid-template-columns: 1fr;
+        min-height: 0;
+      }
+
+      .messenger-left-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .messenger-side-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        min-height: 0;
+      }
+
+      .messenger-side-tab-btn {
+        min-height: 60px;
+      }
+
+      .ms-nav-icon {
+        font-size: 18px;
+      }
+
+      .ms-nav-text {
+        font-size: 9px;
+      }
+
+      .messenger-side-create-btn {
+        margin-top: 0;
+      }
+
+      .messenger-dialog-wrap {
+        min-height: 0;
+      }
+
+      .messenger-dialog-messages {
+        max-height: 46vh;
+      }
+
+      .call-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .call-device-row {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand {
+        font-size: 22px;
+      }
+
+      .balance-pill,
+      .online,
+      .user-badge {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .auth-switch {
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        padding: 10px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="authView" class="auth-wrap">
+    <div class="auth-card card">
+      <h1>NM-Bank</h1>
+      <p class="muted">Локальный онлайн банк: экономика, игры, VIP, кредиты, аналитика.</p>
+
+      <div class="auth-switch">
+        <button id="showLoginBtn" class="btn">Вход</button>
+        <button id="showRegisterBtn" class="btn secondary">Регистрация</button>
+      </div>
+
+      <form id="loginForm" class="auth-page">
+        <input id="loginUsername" type="text" placeholder="Логин" required />
+        <div class="pw-wrap">
+          <input id="loginPassword" type="password" placeholder="Пароль" required />
+          <button class="pw-toggle" type="button" data-target="loginPassword">Показать</button>
+        </div>
+        <button class="btn" type="submit">Войти</button>
+      </form>
+
+      <form id="registerForm" class="auth-page hidden">
+        <input id="registerUsername" type="text" placeholder="Логин" required />
+        <input id="registerFullName" type="text" placeholder="Имя" required />
+        <div class="pw-wrap">
+          <input id="registerPassword" type="password" placeholder="Пароль (мин. 6)" required />
+          <button class="pw-toggle" type="button" data-target="registerPassword">Показать</button>
+        </div>
+        <div class="pw-wrap">
+          <input id="registerPasswordConfirm" type="password" placeholder="Подтверждение пароля" required />
+          <button class="pw-toggle" type="button" data-target="registerPasswordConfirm">Показать</button>
+        </div>
+        <input id="registerRef" type="text" placeholder="Реферальный код (необязательно)" />
+        <button class="btn" type="submit">Создать аккаунт</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">NM-Bank</div>
+        <div class="online">Онлайн: <b id="onlineCount">0</b></div>
+        <div class="top-right">
+          <div class="balance-pill">Баланс: <b id="topBalance">-</b></div>
+          <button id="notifyToggleBtn" class="notify-btn" type="button" title="Уведомления">
+            🔔
+            <span id="notifyBadge" class="support-badge hidden">0</span>
+          </button>
+          <div class="user-badge">
+            <span id="userVip">🙂</span>
+            <b id="userNameTop">guest</b>
+          </div>
+          <button id="logoutBtn" class="btn secondary" style="padding:6px 10px;">Выйти</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="mainTabs">
+        <button class="tab-btn active" data-tab="overview">Обзор</button>
+        <button class="tab-btn" data-tab="currency">Валюта</button>
+        <button class="tab-btn" data-tab="profile">Профиль</button>
+        <button class="tab-btn" data-tab="game">Игра 50/50</button>
+        <button class="tab-btn" data-tab="messenger">Мессенджер</button>
+        <button class="tab-btn" data-tab="stats">Статистика</button>
+        <button class="tab-btn" data-tab="top">Топ по балансу</button>
+        <button class="tab-btn" data-tab="referrals">Рефералы</button>
+        <button class="tab-btn" data-tab="credits">Кредиты</button>
+        <button id="adminTabBtn" class="tab-btn hidden" data-tab="admin">Админ</button>
+      </div>
+
+      <section id="tab-overview" class="tab active">
+        <div class="row cols-2">
+          <div class="card">
+            <h3>Экономика</h3>
+            <div style="margin-top:10px; display:grid; gap:10px;">
+              <button id="clickBtn" class="btn">Кликер (+монеты)</button>
+              <button id="dailyBtn" class="btn">Ежедневный бонус</button>
+              <div class="muted" id="dailyTimer">Доступен сейчас</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Перевод</h3>
+            <form id="transferForm" style="margin-top:10px; display:grid; gap:10px;">
+              <input id="transferTo" type="text" placeholder="Получатель" required />
+              <select id="transferCurrency">
+                <option value="RUB">RUB</option>
+                <option value="USD">USD</option>
+              </select>
+              <input id="transferAmount" type="number" min="1" placeholder="Сумма" required />
+              <button class="btn" type="submit">Отправить</button>
+            </form>
+            <div id="overviewRateLine" class="muted" style="margin-top:8px;">Курс USD: -</div>
+          </div>
+        </div>
+
+        <div class="row cols-2">
+          <div class="card">
+            <h3>VIP апгрейд</h3>
+            <div class="muted" style="margin:8px 0 12px;">Bronze / Silver / Gold / Diamond с бонусами к кликам, daily и игре.</div>
+            <div id="vipPrices" class="muted" style="margin-bottom:10px;"></div>
+            <button id="vipUpgradeBtn" class="btn">Повысить VIP</button>
+          </div>
+
+          <div class="card">
+            <h3>Достижения</h3>
+            <ul id="achievementList" class="achievement-list" style="margin-top:10px;"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-currency" class="tab">
+        <div class="row cols-2">
+          <div class="card">
+            <h3>Курс валют</h3>
+            <div style="margin-top:10px; display:grid; gap:8px;">
+              <div>Текущий курс: <b id="usdRateValue">-</b> RUB за 1 USD</div>
+              <div class="muted">Последнее обновление: <span id="usdRateUpdatedAt">-</span></div>
+            </div>
+            <button id="currencyRefreshBtn" class="btn secondary" style="margin-top:12px;">Обновить курс</button>
+          </div>
+          <div class="card">
+            <h3>Конвертация RUB/USD</h3>
+            <form id="convertForm" style="margin-top:10px; display:grid; gap:10px;">
+              <select id="convertDirection">
+                <option value="RUB_TO_USD">RUB -> USD</option>
+                <option value="USD_TO_RUB">USD -> RUB</option>
+              </select>
+              <input id="convertAmount" type="number" step="0.01" min="0.01" placeholder="Сумма" required />
+              <button class="btn" type="submit">Конвертировать</button>
+            </form>
+            <div class="muted" style="margin-top:8px;">Начальная валюта: RUB. USD хранится отдельно и участвует в переводах USD.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-profile" class="tab">
+        <div class="row cols-2">
+          <div class="card">
+            <h3>Данные профиля</h3>
+            <div style="margin-top:10px; display:grid; gap:8px;">
+              <div>Ник: <b id="profileName">-</b></div>
+              <div>Имя: <b id="profileFullNameView">-</b></div>
+              <div>RUB: <b id="profileBalanceRub">0</b></div>
+              <div>USD: <b id="profileBalanceUsd">0</b></div>
+              <div>Уровень: <b id="profileLevel">1</b></div>
+              <div>VIP: <b id="profileVip">Обычный</b></div>
+              <div>Заработано с рефералов: <b id="profileRefEarn">0</b></div>
+              <div id="profileAdminLevelRow" class="hidden">Уровень админки: <b id="profileAdminLevel">-</b></div>
+              <div>Статус: <b id="profileSuspicious">Нормальный</b></div>
+            </div>
+            <form id="updateProfileForm" style="margin-top:12px; display:grid; gap:10px;">
+              <input id="profileFullNameInput" type="text" placeholder="Ваше имя" required />
+              <button class="btn" type="submit">Сохранить имя</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>Смена пароля</h3>
+            <form id="changePasswordForm" style="margin-top:10px; display:grid; gap:10px;">
+              <div class="pw-wrap">
+                <input id="currentPassword" type="password" placeholder="Текущий пароль" required />
+                <button class="pw-toggle" type="button" data-target="currentPassword">Показать</button>
+              </div>
+              <div class="pw-wrap">
+                <input id="newPassword" type="password" placeholder="Новый пароль" required />
+                <button class="pw-toggle" type="button" data-target="newPassword">Показать</button>
+              </div>
+              <div class="pw-wrap">
+                <input id="newPasswordConfirm" type="password" placeholder="Подтверждение нового пароля" required />
+                <button class="pw-toggle" type="button" data-target="newPasswordConfirm">Показать</button>
+              </div>
+              <button class="btn" type="submit">Сменить пароль</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Удаление аккаунта</h3>
+          <div class="muted" style="margin-top:8px;">Действие необратимо: удалятся профиль, кредиты и чаты поддержки.</div>
+          <form id="deleteAccountForm" style="margin-top:10px; display:grid; gap:10px; max-width:420px;">
+            <div class="pw-wrap">
+              <input id="deleteAccountPassword" type="password" placeholder="Текущий пароль" required />
+              <button class="pw-toggle" type="button" data-target="deleteAccountPassword">Показать</button>
+            </div>
+            <button class="btn danger" type="submit">Удалить аккаунт</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="tab-game" class="tab">
+        <div class="card">
+          <h3>Игра 50/50</h3>
+            <p class="muted" style="margin-top:8px;">Базовый шанс 43%, VIP повышает вероятность победы до 63%. Победа = ставка x2 (Gold+ x2.3).</p>
+          <div class="row cols-2" style="margin-top:12px;">
+            <input id="gameBet" type="number" min="1" placeholder="Ставка" />
+            <button id="playBtn" class="btn">Играть</button>
+          </div>
+          <div id="gameResult" class="game-result">Сделай ставку и нажми «Играть»</div>
+        </div>
+      </section>
+
+      <section id="tab-messenger" class="tab">
+        <div class="card">
+          <h3>Мессенджер</h3>
+          <div class="muted" style="margin-top:8px;">Встроенный чат NM-Bank с вкладками профиля, чатов и создания.</div>
+
+          <div id="messengerModeInternal" class="messenger-mode active">
+            <div class="messenger-grid">
+              <div class="messenger-col">
+                <div class="messenger-left-layout">
+                  <div class="messenger-side-tabs">
+                    <button id="messengerSideTabProfileBtn" class="messenger-side-tab-btn active" type="button" data-ms-tab="profile">
+                      <span class="ms-nav-icon">👤</span>
+                      <span class="ms-nav-text">Профиль</span>
+                    </button>
+                    <button id="messengerSideTabChatsBtn" class="messenger-side-tab-btn" type="button" data-ms-tab="chats">
+                      <span class="ms-nav-icon">💬</span>
+                      <span class="ms-nav-text">Чаты</span>
+                    </button>
+                    <button id="messengerCreateBtn" class="messenger-side-tab-btn messenger-side-create-btn" type="button" data-ms-tab="create" title="Создать каналы">
+                      <span class="ms-nav-icon">✏️</span>
+                      <span class="ms-nav-text">Создать</span>
+                    </button>
+                  </div>
+
+                  <div class="messenger-side-panels">
+                    <div id="messengerPanelProfile" class="messenger-side-panel active">
+                      <div class="messenger-box">
+                        <h4 style="margin:0;">Профиль в мессенджере</h4>
+                        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+                          <span id="messengerAvatarPreview" class="avatar" style="width:42px; height:42px;">?</span>
+                          <div>
+                            <div id="messengerIdentityName">-</div>
+                            <div id="messengerIdentityUser" class="muted">@-</div>
+                          </div>
+                        </div>
+                        <form id="messengerAvatarForm" style="margin-top:10px; display:grid; gap:8px;">
+                          <input id="messengerAvatarInput" type="url" placeholder="URL аватарки (https://...) или пусто чтобы убрать" />
+                          <button class="btn secondary" type="submit">Сохранить аватар</button>
+                          <div style="display:grid; gap:8px; grid-template-columns:1fr auto;">
+                            <input id="messengerAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                            <button id="messengerAvatarUploadBtn" class="btn secondary" type="button">Загрузить файл</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+
+                    <div id="messengerPanelChats" class="messenger-side-panel">
+                      <div class="messenger-box">
+                        <h4 style="margin:0;">Поиск пользователя</h4>
+                        <form id="messengerSearchForm" style="margin-top:8px; display:grid; gap:8px; grid-template-columns:1fr auto;">
+                          <input id="messengerSearchInput" type="text" placeholder="Введи username..." />
+                          <button class="btn secondary" type="submit">Поиск</button>
+                        </form>
+                        <div id="messengerSearchResults" class="messenger-list"></div>
+                      </div>
+
+                      <div class="messenger-box">
+                        <h4 style="margin:0;">Диалоги</h4>
+                        <div id="messengerDialogsList" class="messenger-list"></div>
+                      </div>
+                    </div>
+
+                    <div id="messengerPanelCreate" class="messenger-side-panel">
+                      <div class="messenger-box">
+                        <h4 style="margin:0;">Каналы</h4>
+                        <form id="messengerChannelCreateForm" style="margin-top:8px; display:grid; gap:8px;">
+                          <input id="messengerChannelTitleInput" type="text" placeholder="Название канала" required />
+                          <input id="messengerChannelSlugInput" type="text" placeholder="Slug (опционально)" />
+                          <button class="btn secondary" type="submit">Создать канал</button>
+                        </form>
+                        <form id="messengerChannelJoinForm" style="margin-top:8px; display:grid; gap:8px; grid-template-columns:1fr auto;">
+                          <input id="messengerChannelJoinInput" type="number" min="1" placeholder="ID канала для вступления" />
+                          <button class="btn secondary" type="submit">Вступить</button>
+                        </form>
+                        <button id="messengerChannelsRefreshBtn" class="btn secondary" type="button" style="margin-top:8px;">Обновить список каналов</button>
+                        <div id="messengerChannelsList" class="messenger-list"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="messenger-dialog-wrap">
+                <div class="messenger-box" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                  <div>
+                    <div class="muted">Текущий чат</div>
+                    <div id="messengerDialogTitle" style="font-weight:700; font-size:18px;">Выбери чат</div>
+                    <div id="messengerDialogSub" class="muted">Общий чат отключен</div>
+                  </div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button id="messengerCallBtn" class="btn secondary" type="button" disabled>Позвонить</button>
+                  </div>
+                </div>
+
+                <div id="publicChatMessages" class="messenger-dialog-messages"></div>
+
+                <form id="publicChatForm" style="display:grid; gap:8px; grid-template-columns:1fr auto;">
+                  <input id="publicChatInput" type="text" placeholder="Сообщение..." required />
+                  <button class="btn" type="submit">Отправить</button>
+                </form>
+
+                <div class="messenger-box">
+                  <h4 style="margin:0;">Управление звонком</h4>
+                  <div id="callStatus" class="call-status">Звонок не активен</div>
+                  <div class="call-preview">
+                    <video id="callLocalVideo" autoplay playsinline muted></video>
+                  </div>
+                  <div class="call-controls">
+                    <button id="callMicBtn" class="btn secondary" type="button" disabled>🎙️ Микрофон: ВКЛ</button>
+                    <button id="callCameraBtn" class="btn secondary" type="button" disabled>📷 Камера: ВКЛ</button>
+                    <button id="callScreenBtn" class="btn secondary" type="button" disabled>🖥 Экран: ВЫКЛ</button>
+                    <button id="callEndBtn" class="btn danger" type="button" disabled>Завершить звонок</button>
+                  </div>
+                  <div class="call-device-row">
+                    <select id="callOutputSelect" disabled>
+                      <option value="default">Вывод звука: по умолчанию</option>
+                    </select>
+                    <button id="callRefreshDevicesBtn" class="btn secondary" type="button">Обновить устройства</button>
+                  </div>
+                  <div id="callDeviceHint" class="muted" style="margin-top:8px;">Для выбора наушников браузер должен поддерживать setSinkId.</div>
+                </div>
+
+                <div class="messenger-box">
+                  <h4 style="margin:0;">Звонки</h4>
+                  <div id="messengerCallLog" class="messenger-call-log"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="tab-stats" class="tab">
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3>Аналитика</h3>
+          <button id="statsRefreshBtn" class="btn secondary">Обновить</button>
+        </div>
+        <div class="stats-grid">
+          <div class="card chart-wrap">
+            <h3>Активность по дням</h3>
+            <canvas id="activityChart"></canvas>
+          </div>
+          <div class="card chart-wrap">
+            <h3>Баланс во времени</h3>
+            <canvas id="balanceChart"></canvas>
+          </div>
+          <div class="card chart-wrap">
+            <h3>Победы / Поражения</h3>
+            <canvas id="winsChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-top" class="tab">
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div>
+            <h3>Топ по балансу</h3>
+            <div class="muted" style="margin-top:8px;">
+              Рейтинг считает общий капитал: RUB + (USD x курс). Отображение можно переключить в RUB/USD.
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="topBalanceCurrency">
+              <option value="RUB">Показать в RUB</option>
+              <option value="USD">Показать в USD</option>
+            </select>
+            <button id="topBalanceRefreshBtn" class="btn secondary" type="button">Обновить</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="topBalanceRateLine" class="muted">Курс USD: -</div>
+          <div style="overflow:auto; margin-top:10px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Пользователь</th>
+                  <th>VIP</th>
+                  <th>Уровень</th>
+                  <th id="topBalanceAmountHeader">Баланс (RUB)</th>
+                </tr>
+              </thead>
+              <tbody id="topBalanceBody"></tbody>
+            </table>
+          </div>
+          <div id="topBalanceMeRank" class="muted" style="margin-top:10px;">Твое место: -</div>
+        </div>
+      </section>
+
+      <section id="tab-referrals" class="tab">
+        <div class="row cols-2">
+          <div class="card">
+            <h3>Твой реферальный код</h3>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <input id="refCodeInput" type="text" readonly />
+              <button id="copyRefBtn" class="btn secondary">Копировать</button>
+            </div>
+            <p class="muted" style="margin-top:10px;">Бонусы: +1000 за регистрацию по коду и +5% с заработка реферала.</p>
+          </div>
+          <div class="card">
+            <h3>Доход с рефералов</h3>
+            <p style="margin-top:12px; font-size:28px; font-weight:700;" id="refEarnBig">0</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Список рефералов</h3>
+          <div style="overflow:auto; margin-top:10px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Ник</th>
+                  <th>VIP</th>
+                  <th>Уровень</th>
+                  <th>Баланс</th>
+                  <th>Последняя активность</th>
+                </tr>
+              </thead>
+              <tbody id="refTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-credits" class="tab">
+        <div class="row cols-2">
+          <div class="card">
+            <h3>Условия кредита</h3>
+            <div style="margin-top:10px; display:grid; gap:8px;">
+              <div>Лимит: <b id="creditLimit">0</b></div>
+              <div>Процент: <b id="creditPercent">0%</b></div>
+              <div>Срок: <b id="creditDays">0</b> дней</div>
+            </div>
+            <div style="margin-top:10px; display:grid; gap:8px;">
+              <input id="creditTakeAmount" type="number" min="1" placeholder="Сумма кредита" />
+              <button id="creditTakeBtn" class="btn">Взять кредит</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Активный кредит</h3>
+            <div id="activeCreditWrap" style="margin-top:10px; display:grid; gap:8px;"></div>
+            <button id="creditRepayBtn" class="btn danger" style="margin-top:10px;">Погасить активный кредит</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>История кредитов</h3>
+          <div style="overflow:auto; margin-top:10px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Сумма</th>
+                  <th>К оплате</th>
+                  <th>Взято</th>
+                  <th>Дедлайн</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="creditTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-admin" class="tab">
+        <div id="adminLoginWrap" class="card">
+          <h3>Админ вход</h3>
+          <div id="adminLoginHint" class="muted" style="margin-top:8px;">Введите пароль админки</div>
+          <form id="adminLoginForm" style="margin-top:10px; display:grid; gap:10px; max-width:420px;">
+            <div class="pw-wrap">
+              <input id="adminPassword" type="password" placeholder="Пароль админа" required />
+              <button class="pw-toggle" type="button" data-target="adminPassword">Показать</button>
+            </div>
+            <div id="adminPasswordConfirmWrap" class="pw-wrap hidden">
+              <input id="adminPasswordConfirm" type="password" placeholder="Подтверждение пароля админки" />
+              <button class="pw-toggle" type="button" data-target="adminPasswordConfirm">Показать</button>
+            </div>
+            <button id="adminLoginSubmitBtn" class="btn" type="submit">Войти как админ</button>
+          </form>
+        </div>
+
+        <div id="adminPanelWrap" class="admin-tools hidden">
+          <div class="card" style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
+            <div>
+              <h3>Админ-панель</h3>
+              <div class="muted">Уровни админки, модерация, поддержка, админ-чат и управление банком.</div>
+              <div class="chip" id="adminLevelChip">Уровень админки: -</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button id="adminRefreshBtn" class="btn secondary">Обновить</button>
+              <button id="adminLogoutBtn" class="btn danger">Выйти</button>
+            </div>
+          </div>
+
+          <div class="tabs admin-subtabs">
+            <button class="tab-btn active admin-subtab-btn" data-admin-tab="dashboard">Дашборд</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="users">Пользователи</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="admins">Админы</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="moderation">Модерация</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="support">Поддержка</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="messenger">Мессенджер</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="logs">Логи</button>
+            <button class="tab-btn admin-subtab-btn" data-admin-tab="credits">Кредиты</button>
+            <button id="adminEconomyTabBtn" class="tab-btn admin-subtab-btn hidden" data-admin-tab="economy">Экономика</button>
+            <button id="adminNgrokTabBtn" class="tab-btn admin-subtab-btn hidden" data-admin-tab="ngrok">Cloudflare</button>
+          </div>
+
+          <section id="admin-tab-dashboard" class="admin-tab active">
+            <div class="row cols-3">
+              <div class="card"><h3>Онлайн</h3><p style="margin-top:10px; font-size:26px;" id="adminOnline">0</p></div>
+              <div class="card"><h3>Подозрительные</h3><p style="margin-top:10px; font-size:26px;" id="adminSuspicious">0</p></div>
+              <div class="card"><h3>Просрочки</h3><p style="margin-top:10px; font-size:26px;" id="adminOverdue">0</p></div>
+            </div>
+            <div class="row cols-2">
+              <div class="card"><h3>Новых тикетов поддержки</h3><p style="margin-top:10px; font-size:24px;" id="adminSupportUnread">0</p></div>
+              <div class="card"><h3>Новых сообщений админ-чата</h3><p style="margin-top:10px; font-size:24px;" id="adminChatUnread">0</p></div>
+            </div>
+            <div class="card">
+              <h3>Доступные функции вашего уровня</h3>
+              <div id="adminCapabilities" class="muted" style="margin-top:8px;">-</div>
+            </div>
+          </section>
+
+          <section id="admin-tab-users" class="admin-tab">
+            <div class="card">
+              <h3>Пользователи</h3>
+              <div style="overflow:auto; margin-top:10px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Ник</th>
+                      <th>RUB</th>
+                      <th>USD</th>
+                      <th>VIP</th>
+                      <th>Lvl</th>
+                      <th>Online</th>
+                      <th>Suspicious</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-admins" class="admin-tab">
+            <div class="card">
+              <h3>Выдача админки по нику</h3>
+              <form id="adminGrantForm" style="margin-top:10px; display:grid; gap:10px; max-width:420px;">
+                <input id="adminGrantUsername" type="text" placeholder="Ник пользователя" required />
+                <select id="adminGrantLevel">
+                  <option value="0">0 - Пользователь</option>
+                  <option value="1">1 - Тестовый</option>
+                  <option value="2">2 - Поддержка</option>
+                  <option value="3">3 - Модератор</option>
+                  <option value="4">4 - Старший модератор</option>
+                  <option value="5">5 - Администратор</option>
+                  <option value="6">6 - Лидер</option>
+                  <option value="7">7 - Создатель</option>
+                </select>
+                <button class="btn" type="submit">Выдать/изменить уровень</button>
+              </form>
+            </div>
+            <div class="card">
+              <h3>Список админов</h3>
+              <div style="overflow:auto; margin-top:10px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Ник</th>
+                      <th>Имя</th>
+                      <th>Уровень админки</th>
+                      <th>Online</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminAdminsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-moderation" class="admin-tab">
+            <div class="card">
+              <h3>Модерация: предупреждения и баны</h3>
+              <div style="overflow:auto; margin-top:10px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Ник</th>
+                      <th>Warn</th>
+                      <th>Бан до</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminModerationBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-support" class="admin-tab">
+            <div class="row cols-2">
+              <div class="card">
+                <h3>Диалоги поддержки</h3>
+                <div style="overflow:auto; margin-top:10px; max-height:360px;">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Пользователь</th>
+                        <th>Последнее</th>
+                        <th>Новых</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminSupportUsersBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card">
+                <h3 id="adminSupportTitle">Чат поддержки</h3>
+                <div id="adminSupportMessages" style="margin-top:10px; max-height:290px; overflow:auto; display:grid; gap:8px;"></div>
+                <form id="adminSupportReplyForm" style="margin-top:10px; display:grid; gap:8px;">
+                  <input id="adminSupportReplyText" type="text" placeholder="Ответ пользователю" required />
+                  <button class="btn" type="submit">Отправить ответ</button>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-messenger" class="admin-tab">
+            <div class="card">
+              <h3>Мессенджер админов</h3>
+              <div id="adminChatMessages" style="margin-top:10px; max-height:360px; overflow:auto; display:grid; gap:8px;"></div>
+              <form id="adminChatForm" style="margin-top:10px; display:grid; gap:8px;">
+                <input id="adminChatInput" type="text" placeholder="Сообщение всем админам" required />
+                <button class="btn" type="submit">Отправить</button>
+              </form>
+            </div>
+          </section>
+
+          <section id="admin-tab-logs" class="admin-tab">
+            <div class="card">
+              <h3>Логи (последние)</h3>
+              <div style="overflow:auto; margin-top:10px; max-height:320px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Пользователь</th>
+                      <th>Действие</th>
+                      <th>Время</th>
+                      <th>Инфо</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminLogsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-credits" class="admin-tab">
+            <div class="card">
+              <h3>Активные кредиты (управление)</h3>
+              <div style="overflow:auto; margin-top:10px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>User</th>
+                      <th>Сумма</th>
+                      <th>К оплате</th>
+                      <th>Дедлайн</th>
+                      <th>Статус</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminCreditsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-economy" class="admin-tab">
+            <div class="row cols-2">
+              <div class="card">
+                <h3>USD курс</h3>
+                <div style="margin-top:10px; display:grid; gap:8px;">
+                  <div>Текущий: <b id="adminUsdRateValue">-</b> RUB</div>
+                  <div class="muted">Обновлено: <span id="adminUsdRateUpdatedAt">-</span></div>
+                </div>
+                <form id="adminUsdRateForm" style="margin-top:12px; display:grid; gap:8px; max-width:280px;">
+                  <input id="adminUsdRateInput" type="number" step="0.0001" min="40" max="220" placeholder="Новый курс USD" required />
+                  <button class="btn" type="submit">Установить курс</button>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <section id="admin-tab-ngrok" class="admin-tab">
+            <div class="card">
+              <h3>Cloudflare Tunnel</h3>
+              <div class="muted" style="margin-top:8px;">Только для админки 7 уровня (Создатель). Даст внешний адрес для входа в NM-Bank.</div>
+              <div class="muted" style="margin-top:6px;">Один клик как ngrok: сначала Cloudflare Quick Tunnel, если недоступен — автофолбэк на localhost.run.</div>
+              <div style="margin-top:12px; display:grid; gap:8px;">
+                <div>Статус: <b id="adminNgrokState">-</b></div>
+                <div>Ссылка: <a id="adminNgrokUrlLink" href="#" target="_blank" rel="noopener">-</a></div>
+                <div>IP / Host: <b id="adminNgrokIp">-</b></div>
+                <div>PID: <b id="adminNgrokPid">-</b></div>
+                <div id="adminNgrokError" class="muted">-</div>
+              </div>
+              <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                <button id="adminNgrokStartBtn" class="btn" type="button">Включить Tunnel</button>
+                <button id="adminNgrokStopBtn" class="btn danger" type="button">Отключить Tunnel</button>
+                <button id="adminNgrokRefreshBtn" class="btn secondary" type="button">Обновить статус</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <button id="supportToggleBtn" class="support-toggle hidden" type="button">
+    💬
+    <span id="supportUnreadBadge" class="support-badge hidden">0</span>
+  </button>
+  <div id="supportWidget" class="support-widget hidden">
+    <div class="support-header">
+      <b>Служба поддержки</b>
+      <button id="supportCloseBtn" class="btn secondary" type="button" style="padding:5px 8px;">Закрыть</button>
+    </div>
+    <div id="supportMessages" class="support-messages"></div>
+    <form id="supportForm" style="padding:10px; border-top:1px solid #263a63; display:grid; grid-template-columns:1fr auto; gap:8px;">
+      <input id="supportInput" type="text" placeholder="Напишите сообщение поддержке..." required />
+      <button class="btn" type="submit">Отпр.</button>
+    </form>
+  </div>
+
+  <div id="notifyPanel" class="notify-panel hidden">
+    <div class="notify-header">
+      <b>Уведомления</b>
+      <div style="display:flex; gap:8px;">
+        <button id="notifyReadAllBtn" class="btn secondary" type="button" style="padding:5px 8px;">Прочитать всё</button>
+        <button id="notifyCloseBtn" class="btn secondary" type="button" style="padding:5px 8px;">Закрыть</button>
+      </div>
+    </div>
+    <div id="notifyList" class="notify-list"></div>
+    <div class="muted" style="padding:8px 12px; border-top:1px solid #263a63;">Новые события по аккаунту, переводам и действиям админов.</div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const state = {
+      user: null,
+      isAdmin: false,
+      canAdmin: false,
+      adminLevel: 0,
+      adminPasswordSet: false,
+      adminCaps: null,
+      adminSupportSelectedUserId: null,
+      currencyInfo: null,
+      topBalanceData: null,
+      topBalanceCurrency: 'RUB',
+      vipPrices: null,
+      stats: null,
+      referrals: null,
+      credits: null,
+      supportMessages: [],
+      supportUnread: 0,
+      notifications: [],
+      notificationsUnread: 0,
+      publicChatMessages: [],
+      publicChatUnread: 0,
+      messengerMode: 'internal',
+      messengerSidebarTab: 'profile',
+      call: {
+        active: false,
+        peerUserId: null,
+        peerLabel: '',
+        currentCallId: null,
+        lastIncomingCallId: null,
+        micEnabled: true,
+        cameraEnabled: true,
+        screenEnabled: false,
+        localStream: null,
+        screenStream: null,
+        outputDevices: [],
+        outputDeviceId: 'default'
+      },
+      messengerSearchResults: [],
+      messengerDialogs: [],
+      messengerJoinedChannels: [],
+      messengerDiscoverChannels: [],
+      messengerMessages: [],
+      messengerCalls: [],
+      messengerCurrent: { type: 'none', userId: null, channelId: null, title: 'Выбери чат', sub: 'Общий чат отключен', avatarUrl: '' },
+      adminOverview: null,
+      adminLogs: [],
+      adminSupportConversations: [],
+      adminSupportMessages: [],
+      adminChatMessages: [],
+      adminChatUnread: 0,
+      adminEconomy: null,
+      ngrokStatus: null
+    };
+
+    const els = {
+      authView: document.getElementById('authView'),
+      appView: document.getElementById('appView'),
+      loginForm: document.getElementById('loginForm'),
+      registerForm: document.getElementById('registerForm'),
+      showLoginBtn: document.getElementById('showLoginBtn'),
+      showRegisterBtn: document.getElementById('showRegisterBtn'),
+      toast: document.getElementById('toast'),
+      tabs: Array.from(document.querySelectorAll('#mainTabs .tab-btn')),
+      messengerTabBtn: document.querySelector('#mainTabs .tab-btn[data-tab="messenger"]'),
+      messengerModeButtons: Array.from(document.querySelectorAll('.messenger-mode-btn')),
+      tabViews: Array.from(document.querySelectorAll('.tab')),
+      onlineCount: document.getElementById('onlineCount'),
+      topBalance: document.getElementById('topBalance'),
+      notifyToggleBtn: document.getElementById('notifyToggleBtn'),
+      notifyBadge: document.getElementById('notifyBadge'),
+      notifyPanel: document.getElementById('notifyPanel'),
+      notifyList: document.getElementById('notifyList'),
+      notifyCloseBtn: document.getElementById('notifyCloseBtn'),
+      notifyReadAllBtn: document.getElementById('notifyReadAllBtn'),
+      adminTabBtn: document.getElementById('adminTabBtn'),
+      userVip: document.getElementById('userVip'),
+      userNameTop: document.getElementById('userNameTop'),
+      profileName: document.getElementById('profileName'),
+      profileFullNameView: document.getElementById('profileFullNameView'),
+      profileFullNameInput: document.getElementById('profileFullNameInput'),
+      updateProfileForm: document.getElementById('updateProfileForm'),
+      profileBalanceRub: document.getElementById('profileBalanceRub'),
+      profileBalanceUsd: document.getElementById('profileBalanceUsd'),
+      profileLevel: document.getElementById('profileLevel'),
+      profileVip: document.getElementById('profileVip'),
+      profileRefEarn: document.getElementById('profileRefEarn'),
+      profileAdminLevelRow: document.getElementById('profileAdminLevelRow'),
+      profileAdminLevel: document.getElementById('profileAdminLevel'),
+      profileSuspicious: document.getElementById('profileSuspicious'),
+      changePasswordForm: document.getElementById('changePasswordForm'),
+      deleteAccountForm: document.getElementById('deleteAccountForm'),
+      deleteAccountPassword: document.getElementById('deleteAccountPassword'),
+      dailyTimer: document.getElementById('dailyTimer'),
+      achievementList: document.getElementById('achievementList'),
+      vipPrices: document.getElementById('vipPrices'),
+      transferCurrency: document.getElementById('transferCurrency'),
+      transferAmount: document.getElementById('transferAmount'),
+      overviewRateLine: document.getElementById('overviewRateLine'),
+      usdRateValue: document.getElementById('usdRateValue'),
+      usdRateUpdatedAt: document.getElementById('usdRateUpdatedAt'),
+      currencyRefreshBtn: document.getElementById('currencyRefreshBtn'),
+      convertForm: document.getElementById('convertForm'),
+      convertDirection: document.getElementById('convertDirection'),
+      convertAmount: document.getElementById('convertAmount'),
+      topBalanceCurrency: document.getElementById('topBalanceCurrency'),
+      topBalanceRefreshBtn: document.getElementById('topBalanceRefreshBtn'),
+      topBalanceRateLine: document.getElementById('topBalanceRateLine'),
+      topBalanceAmountHeader: document.getElementById('topBalanceAmountHeader'),
+      topBalanceBody: document.getElementById('topBalanceBody'),
+      topBalanceMeRank: document.getElementById('topBalanceMeRank'),
+      gameResult: document.getElementById('gameResult'),
+      refCodeInput: document.getElementById('refCodeInput'),
+      refEarnBig: document.getElementById('refEarnBig'),
+      refTableBody: document.getElementById('refTableBody'),
+      creditLimit: document.getElementById('creditLimit'),
+      creditPercent: document.getElementById('creditPercent'),
+      creditDays: document.getElementById('creditDays'),
+      activeCreditWrap: document.getElementById('activeCreditWrap'),
+      creditTableBody: document.getElementById('creditTableBody'),
+      publicChatMessages: document.getElementById('publicChatMessages'),
+      publicChatForm: document.getElementById('publicChatForm'),
+      publicChatInput: document.getElementById('publicChatInput'),
+      messengerModeInternalBtn: document.getElementById('messengerModeInternalBtn'),
+      messengerModeTelegramBtn: document.getElementById('messengerModeTelegramBtn'),
+      messengerModeInternal: document.getElementById('messengerModeInternal'),
+      messengerModeTelegram: document.getElementById('messengerModeTelegram'),
+      messengerSideTabButtons: Array.from(document.querySelectorAll('.messenger-side-tab-btn[data-ms-tab]')),
+      messengerSideTabProfileBtn: document.getElementById('messengerSideTabProfileBtn'),
+      messengerSideTabChatsBtn: document.getElementById('messengerSideTabChatsBtn'),
+      messengerCreateBtn: document.getElementById('messengerCreateBtn'),
+      messengerPanelProfile: document.getElementById('messengerPanelProfile'),
+      messengerPanelChats: document.getElementById('messengerPanelChats'),
+      messengerPanelCreate: document.getElementById('messengerPanelCreate'),
+      messengerAvatarPreview: document.getElementById('messengerAvatarPreview'),
+      messengerIdentityName: document.getElementById('messengerIdentityName'),
+      messengerIdentityUser: document.getElementById('messengerIdentityUser'),
+      messengerAvatarForm: document.getElementById('messengerAvatarForm'),
+      messengerAvatarInput: document.getElementById('messengerAvatarInput'),
+      messengerAvatarFile: document.getElementById('messengerAvatarFile'),
+      messengerAvatarUploadBtn: document.getElementById('messengerAvatarUploadBtn'),
+      messengerSearchForm: document.getElementById('messengerSearchForm'),
+      messengerSearchInput: document.getElementById('messengerSearchInput'),
+      messengerSearchResults: document.getElementById('messengerSearchResults'),
+      messengerDialogsList: document.getElementById('messengerDialogsList'),
+      messengerChannelCreateForm: document.getElementById('messengerChannelCreateForm'),
+      messengerChannelTitleInput: document.getElementById('messengerChannelTitleInput'),
+      messengerChannelSlugInput: document.getElementById('messengerChannelSlugInput'),
+      messengerChannelJoinForm: document.getElementById('messengerChannelJoinForm'),
+      messengerChannelJoinInput: document.getElementById('messengerChannelJoinInput'),
+      messengerChannelsRefreshBtn: document.getElementById('messengerChannelsRefreshBtn'),
+      messengerChannelsList: document.getElementById('messengerChannelsList'),
+      messengerDialogTitle: document.getElementById('messengerDialogTitle'),
+      messengerDialogSub: document.getElementById('messengerDialogSub'),
+      messengerCallBtn: document.getElementById('messengerCallBtn'),
+      callStatus: document.getElementById('callStatus'),
+      callLocalVideo: document.getElementById('callLocalVideo'),
+      callMicBtn: document.getElementById('callMicBtn'),
+      callCameraBtn: document.getElementById('callCameraBtn'),
+      callScreenBtn: document.getElementById('callScreenBtn'),
+      callEndBtn: document.getElementById('callEndBtn'),
+      callOutputSelect: document.getElementById('callOutputSelect'),
+      callRefreshDevicesBtn: document.getElementById('callRefreshDevicesBtn'),
+      callDeviceHint: document.getElementById('callDeviceHint'),
+      messengerCallLog: document.getElementById('messengerCallLog'),
+      adminLoginWrap: document.getElementById('adminLoginWrap'),
+      adminLoginHint: document.getElementById('adminLoginHint'),
+      adminPassword: document.getElementById('adminPassword'),
+      adminPasswordConfirm: document.getElementById('adminPasswordConfirm'),
+      adminPasswordConfirmWrap: document.getElementById('adminPasswordConfirmWrap'),
+      adminLoginSubmitBtn: document.getElementById('adminLoginSubmitBtn'),
+      adminPanelWrap: document.getElementById('adminPanelWrap'),
+      adminOnline: document.getElementById('adminOnline'),
+      adminSuspicious: document.getElementById('adminSuspicious'),
+      adminOverdue: document.getElementById('adminOverdue'),
+      adminUsersBody: document.getElementById('adminUsersBody'),
+      adminLogsBody: document.getElementById('adminLogsBody'),
+      adminCreditsBody: document.getElementById('adminCreditsBody'),
+      adminLevelChip: document.getElementById('adminLevelChip'),
+      adminCapabilities: document.getElementById('adminCapabilities'),
+      adminSupportUnread: document.getElementById('adminSupportUnread'),
+      adminChatUnread: document.getElementById('adminChatUnread'),
+      adminAdminsBody: document.getElementById('adminAdminsBody'),
+      adminModerationBody: document.getElementById('adminModerationBody'),
+      adminSupportUsersBody: document.getElementById('adminSupportUsersBody'),
+      adminSupportMessages: document.getElementById('adminSupportMessages'),
+      adminSupportTitle: document.getElementById('adminSupportTitle'),
+      adminSupportReplyForm: document.getElementById('adminSupportReplyForm'),
+      adminSupportReplyText: document.getElementById('adminSupportReplyText'),
+      adminChatMessages: document.getElementById('adminChatMessages'),
+      adminChatForm: document.getElementById('adminChatForm'),
+      adminChatInput: document.getElementById('adminChatInput'),
+      adminEconomyTabBtn: document.getElementById('adminEconomyTabBtn'),
+      adminUsdRateValue: document.getElementById('adminUsdRateValue'),
+      adminUsdRateUpdatedAt: document.getElementById('adminUsdRateUpdatedAt'),
+      adminUsdRateForm: document.getElementById('adminUsdRateForm'),
+      adminUsdRateInput: document.getElementById('adminUsdRateInput'),
+      adminNgrokTabBtn: document.getElementById('adminNgrokTabBtn'),
+      adminNgrokState: document.getElementById('adminNgrokState'),
+      adminNgrokUrlLink: document.getElementById('adminNgrokUrlLink'),
+      adminNgrokIp: document.getElementById('adminNgrokIp'),
+      adminNgrokPid: document.getElementById('adminNgrokPid'),
+      adminNgrokError: document.getElementById('adminNgrokError'),
+      adminNgrokStartBtn: document.getElementById('adminNgrokStartBtn'),
+      adminNgrokStopBtn: document.getElementById('adminNgrokStopBtn'),
+      adminNgrokRefreshBtn: document.getElementById('adminNgrokRefreshBtn'),
+      adminSubtabButtons: Array.from(document.querySelectorAll('.admin-subtab-btn')),
+      adminSubtabs: Array.from(document.querySelectorAll('.admin-tab')),
+      adminGrantForm: document.getElementById('adminGrantForm'),
+      adminGrantUsername: document.getElementById('adminGrantUsername'),
+      adminGrantLevel: document.getElementById('adminGrantLevel'),
+      supportToggleBtn: document.getElementById('supportToggleBtn'),
+      supportUnreadBadge: document.getElementById('supportUnreadBadge'),
+      supportWidget: document.getElementById('supportWidget'),
+      supportCloseBtn: document.getElementById('supportCloseBtn'),
+      supportMessages: document.getElementById('supportMessages'),
+      supportForm: document.getElementById('supportForm'),
+      supportInput: document.getElementById('supportInput')
+    };
+
+    const fmt = (n) => Number(n || 0).toLocaleString('ru-RU');
+    const fmtUsd = (n) => Number(n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtRate = (n) => Number(n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const isAvatarSourceAllowed = (src) => {
+      const v = String(src || '').trim();
+      if (!v) return false;
+      if (/^https?:\/\//i.test(v)) return true;
+      return /^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+/=]+$/i.test(v);
+    };
+
+    function syncPasswordToggleButtonById(inputId) {
+      if (!inputId) return;
+      const input = document.getElementById(inputId);
+      const btn = document.querySelector(`.pw-toggle[data-target="${inputId}"]`);
+      if (!input || !btn) return;
+      const shown = input.type === 'text';
+      btn.textContent = shown ? 'Скрыть' : 'Показать';
+      btn.classList.toggle('active', shown);
+    }
+
+    function resetPasswordFieldVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.type = 'password';
+      syncPasswordToggleButtonById(inputId);
+    }
+
+    function bindPasswordToggles() {
+      const toggles = Array.from(document.querySelectorAll('.pw-toggle'));
+      toggles.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const inputId = btn.dataset.target;
+          const input = inputId ? document.getElementById(inputId) : null;
+          if (!input) return;
+          input.type = input.type === 'password' ? 'text' : 'password';
+          syncPasswordToggleButtonById(inputId);
+        });
+      });
+      toggles.forEach((btn) => syncPasswordToggleButtonById(btn.dataset.target));
+    }
+
+    function showToast(text, type = 'good') {
+      els.toast.textContent = text;
+      els.toast.className = `toast show ${type === 'bad' ? 'bad' : 'good'}`;
+      setTimeout(() => { els.toast.className = 'toast'; }, 2200);
+    }
+
+    async function api(path, options = {}) {
+      const cfg = { method: 'GET', headers: {}, ...options };
+      if (cfg.body && typeof cfg.body !== 'string') {
+        cfg.headers['Content-Type'] = 'application/json';
+        cfg.body = JSON.stringify(cfg.body);
+      }
+      const res = await fetch(path, cfg);
+      const data = await res.json().catch(() => ({ ok: false, error: 'Ошибка ответа сервера' }));
+      if (res.status === 401 && path !== '/api/login' && path !== '/api/register' && path !== '/api/admin/login') {
+        showAuth();
+        throw new Error(data.error || 'Требуется вход');
+      }
+      if (!data.ok) throw new Error(data.error || 'Ошибка запроса');
+      return data;
+    }
+
+    function showAuth(showRegister = false) {
+      if (state.call?.active || state.call?.localStream || state.call?.screenStream) {
+        resetCallStateLocal();
+      }
+      els.authView.classList.remove('hidden');
+      els.appView.classList.add('hidden');
+      els.supportWidget.classList.add('hidden');
+      els.notifyPanel.classList.add('hidden');
+      els.supportToggleBtn.classList.add('hidden');
+      els.supportUnreadBadge.classList.add('hidden');
+      switchAuth(showRegister ? 'register' : 'login');
+    }
+
+    function showApp() {
+      els.authView.classList.add('hidden');
+      els.appView.classList.remove('hidden');
+    }
+
+    function switchAuth(mode) {
+      const login = mode === 'login';
+      els.loginForm.classList.toggle('hidden', !login);
+      els.registerForm.classList.toggle('hidden', login);
+      els.showLoginBtn.className = login ? 'btn' : 'btn secondary';
+      els.showRegisterBtn.className = login ? 'btn secondary' : 'btn';
+    }
+
+    function setActiveTab(name) {
+      if (!name) return;
+      if (name === 'admin' && !state.canAdmin) return;
+      els.tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      els.tabViews.forEach(v => v.classList.toggle('active', v.id === `tab-${name}`));
+
+      if (name === 'stats') loadStats();
+      if (name === 'currency') loadCurrencyInfo();
+      if (name === 'top') loadTopBalances();
+      if (name === 'messenger') loadMessengerWorkspace(true);
+      if (name === 'referrals') loadReferrals();
+      if (name === 'credits') loadCredits();
+      if (name === 'admin') renderAdminVisibility();
+    }
+
+    function renderAdminLoginForm() {
+      const setupMode = state.canAdmin && !state.adminPasswordSet;
+      els.adminLoginHint.textContent = setupMode
+        ? 'Первый вход: установите пароль для админ-панели'
+        : 'Введите пароль админки';
+      els.adminPassword.placeholder = setupMode ? 'Новый пароль админки' : 'Пароль админки';
+      els.adminPasswordConfirmWrap.classList.toggle('hidden', !setupMode);
+      els.adminPasswordConfirm.required = setupMode;
+      if (!setupMode) {
+        els.adminPasswordConfirm.value = '';
+        resetPasswordFieldVisibility('adminPasswordConfirm');
+      }
+      els.adminLoginSubmitBtn.textContent = setupMode ? 'Установить пароль и войти' : 'Войти как админ';
+    }
+
+    function renderUser() {
+      if (!state.user) return;
+      const u = state.user;
+
+      els.onlineCount.textContent = fmt(u.online_users);
+      els.userVip.textContent = u.vip_icon;
+      els.userNameTop.textContent = u.username;
+      els.userNameTop.className = `vip-${u.vip_level}`;
+      els.topBalance.textContent = `${fmt(u.balance_rub ?? u.balance)} RUB / ${fmtUsd(u.balance_usd)} USD`;
+
+      els.profileName.textContent = u.username;
+      els.profileName.className = `vip-${u.vip_level}`;
+      els.profileFullNameView.textContent = u.full_name || u.username;
+      els.profileFullNameInput.value = u.full_name || u.username;
+      els.profileBalanceRub.textContent = fmt(u.balance_rub ?? u.balance);
+      els.profileBalanceUsd.textContent = fmtUsd(u.balance_usd);
+      els.profileLevel.textContent = fmt(u.level);
+      els.profileVip.textContent = `${u.vip_icon} ${u.vip_name}`;
+      els.profileVip.className = `vip-${u.vip_level}`;
+      els.profileRefEarn.textContent = fmt(u.referral_earnings);
+      els.profileSuspicious.textContent = u.suspicious ? 'Подозрительный ⚠' : 'Нормальный';
+      els.profileSuspicious.style.color = u.suspicious ? '#ff5d73' : '#9dffd0';
+      els.usdRateValue.textContent = fmtRate(u.usd_rate);
+      els.usdRateUpdatedAt.textContent = u.usd_rate_updated_at || '-';
+      els.overviewRateLine.textContent = `Курс USD: ${fmtRate(u.usd_rate)} RUB`;
+      state.canAdmin = Number(u.admin_level || 0) > 0;
+      state.adminLevel = Number(u.admin_level || 0);
+      state.adminPasswordSet = state.canAdmin ? Boolean(u.admin_password_set) : false;
+      state.notificationsUnread = Number(u.notifications_unread || 0);
+      state.publicChatUnread = 0;
+      renderNotificationsBadge();
+      renderMessengerTabTitle();
+      renderMessengerIdentity();
+      renderMessengerCurrentHeader();
+      els.profileAdminLevelRow.classList.toggle('hidden', !state.canAdmin);
+      if (state.canAdmin) {
+        els.profileAdminLevel.textContent = `${u.admin_level} (${u.admin_level_name || ''})`;
+      }
+      els.supportToggleBtn.classList.remove('hidden');
+
+      const list = Array.isArray(u.achievements) ? u.achievements : [];
+      if (!list.length) {
+        els.achievementList.innerHTML = '<li class="achievement-item muted">Пока нет достижений</li>';
+      } else {
+        els.achievementList.innerHTML = list
+          .map(k => `<li class="achievement-item">🏆 ${esc(u.achievement_labels?.[k] || k)}</li>`)
+          .join('');
+      }
+
+      updateDailyTimerText();
+      renderVipPrices();
+      renderAdminVisibility();
+    }
+
+    function updateDailyTimerText() {
+      if (!state.user) return;
+      const left = Number(state.user.daily_remaining || 0);
+      if (left <= 0) {
+        els.dailyTimer.textContent = 'Ежедневный бонус доступен сейчас';
+        return;
+      }
+      const h = Math.floor(left / 3600);
+      const m = Math.floor((left % 3600) / 60);
+      const s = left % 60;
+      els.dailyTimer.textContent = `До daily: ${h}ч ${m}м ${s}с`;
+    }
+
+    function renderVipPrices() {
+      if (!state.vipPrices) return;
+      const p = state.vipPrices;
+      els.vipPrices.textContent = `Bronze ${fmt(p['1'])} | Silver ${fmt(p['2'])} | Gold ${fmt(p['3'])} | Diamond ${fmt(p['4'])}`;
+    }
+
+    async function loadMe() {
+      const res = await api('/api/me');
+      state.user = res.user;
+      showApp();
+      renderUser();
+      await loadSupportWidgetMessages(false);
+      await loadNotifications(false);
+      await loadMessengerWorkspace(document.getElementById('tab-messenger').classList.contains('active'));
+      await loadCurrencyInfo();
+    }
+
+    async function loadVipPrices() {
+      try {
+        const res = await api('/api/vip/config');
+        state.vipPrices = res.upgrade_costs;
+        renderVipPrices();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadCurrencyInfo() {
+      try {
+        const res = await api('/api/currency');
+        state.currencyInfo = res;
+        els.usdRateValue.textContent = fmtRate(res.usd_rate);
+        els.usdRateUpdatedAt.textContent = res.usd_rate_updated_at || '-';
+        els.overviewRateLine.textContent = `Курс USD: ${fmtRate(res.usd_rate)} RUB`;
+        els.topBalance.textContent = `${fmt(res.balance_rub)} RUB / ${fmtUsd(res.balance_usd)} USD`;
+        if (state.user) {
+          state.user.usd_rate = Number(res.usd_rate || 0);
+          state.user.usd_rate_updated_at = res.usd_rate_updated_at || null;
+          state.user.balance_rub = Number(res.balance_rub || state.user.balance_rub || state.user.balance || 0);
+          state.user.balance_usd = Number(res.balance_usd || state.user.balance_usd || 0);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function fmtTopBalance(value, currency) {
+      const num = Number(value || 0);
+      if (currency === 'USD') return fmtUsd(num);
+      return num.toLocaleString('ru-RU', {
+        minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function renderTopBalances() {
+      const data = state.topBalanceData;
+      const currentCurrency = (data?.currency || state.topBalanceCurrency || 'RUB').toUpperCase() === 'USD' ? 'USD' : 'RUB';
+      state.topBalanceCurrency = currentCurrency;
+      if (els.topBalanceCurrency) {
+        els.topBalanceCurrency.value = currentCurrency;
+      }
+
+      const amountHeader = currentCurrency === 'USD' ? 'Баланс (USD)' : 'Баланс (RUB)';
+      if (els.topBalanceAmountHeader) {
+        els.topBalanceAmountHeader.textContent = amountHeader;
+      }
+
+      const rateValue = Number(data?.usd_rate || state.user?.usd_rate || 0);
+      if (els.topBalanceRateLine) {
+        els.topBalanceRateLine.textContent = `Курс USD: ${fmtRate(rateValue)} RUB • 1000 RUB => ${fmtUsd(rateValue > 0 ? 1000 / rateValue : 0)} USD`;
+      }
+
+      const rows = Array.isArray(data?.top) ? data.top : [];
+      els.topBalanceBody.innerHTML = rows.length
+        ? rows.map((row) => {
+          const isMe = state.user && Number(state.user.id || 0) === Number(row.id || 0);
+          return `
+            <tr${isMe ? ' style="background:rgba(98,70,255,0.12);"' : ''}>
+              <td>${fmt(row.rank || 0)}</td>
+              <td class="vip-${Number(row.vip_level || 0)}">${esc(row.username || '-')}</td>
+              <td>${esc(row.vip_icon || '')} ${esc(row.vip_name || '-')}</td>
+              <td>${fmt(row.level || 0)}</td>
+              <td><b>${fmtTopBalance(row.display_balance, currentCurrency)} ${currentCurrency}</b></td>
+            </tr>
+          `;
+        }).join('')
+        : '<tr><td colspan="5" class="muted">Пока нет данных для рейтинга</td></tr>';
+
+      const meRank = Number(data?.me_rank || 0);
+      const total = Number(data?.total_users || rows.length || 0);
+      if (meRank > 0) {
+        els.topBalanceMeRank.textContent = `Твое место: #${fmt(meRank)} из ${fmt(total)}`;
+      } else {
+        els.topBalanceMeRank.textContent = 'Твое место: -';
+      }
+    }
+
+    async function loadTopBalances() {
+      try {
+        const selected = String(els.topBalanceCurrency?.value || state.topBalanceCurrency || 'RUB').toUpperCase();
+        const currency = selected === 'USD' ? 'USD' : 'RUB';
+        state.topBalanceCurrency = currency;
+        const res = await api(`/api/top/balance?currency=${encodeURIComponent(currency)}&limit=60`);
+        state.topBalanceData = res;
+        renderTopBalances();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await api('/api/stats');
+        state.stats = res;
+        drawActivityChart(res.activity.labels, res.activity.values);
+        drawBalanceChart(res.balance_history);
+        drawWinsChart(res.wins_losses.wins, res.wins_losses.losses);
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function loadReferrals() {
+      try {
+        const res = await api('/api/referrals');
+        state.referrals = res;
+        els.refCodeInput.value = res.ref_code || '';
+        els.refEarnBig.textContent = fmt(res.referral_earnings);
+
+        const rows = res.referrals || [];
+        els.refTableBody.innerHTML = rows.length
+          ? rows.map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td class="vip-${r.vip_level}">${esc(r.username)}</td>
+              <td>${esc(r.vip_name)}</td>
+              <td>${r.level}</td>
+              <td>${fmt(r.balance)}</td>
+              <td>${esc(r.last_active || '-')}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="6" class="muted">Рефералов пока нет</td></tr>';
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function loadCredits() {
+      try {
+        const res = await api('/api/credits');
+        state.credits = res;
+        els.creditLimit.textContent = fmt(res.terms.limit);
+        els.creditPercent.textContent = `${res.terms.interest_percent}%`;
+        els.creditDays.textContent = res.terms.deadline_days;
+
+        if (res.active) {
+          els.activeCreditWrap.innerHTML = `
+            <div>Сумма: <b>${fmt(res.active.amount)}</b></div>
+            <div>К оплате: <b>${fmt(res.active.total_to_pay)}</b></div>
+            <div>Взят: <b>${esc(res.active.taken_at)}</b></div>
+            <div>Дедлайн: <b>${esc(res.active.due_at)}</b></div>
+            <div style="color:${res.active.overdue ? '#ff5d73' : '#9dffd0'};">Статус: <b>${res.active.overdue ? 'Просрочен' : 'Активный'}</b></div>
+          `;
+        } else {
+          els.activeCreditWrap.innerHTML = '<div class="muted">Активного кредита нет</div>';
+        }
+
+        const rows = res.history || [];
+        els.creditTableBody.innerHTML = rows.length
+          ? rows.map(c => `
+            <tr>
+              <td>${c.id}</td>
+              <td>${fmt(c.amount)}</td>
+              <td>${fmt(c.total_to_pay)}</td>
+              <td>${esc(c.taken_at)}</td>
+              <td>${esc(c.due_at)}</td>
+              <td style="color:${c.repaid ? '#9dffd0' : (c.overdue ? '#ff5d73' : '#ffd88f')};">
+                ${c.repaid ? 'Погашен' : (c.overdue ? 'Просрочен' : 'Активен')}
+              </td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="6" class="muted">Кредитов ещё нет</td></tr>';
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    function prepCanvas(canvas) {
+      const ratio = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth || 320;
+      const h = 220;
+      canvas.width = Math.floor(w * ratio);
+      canvas.height = Math.floor(h * ratio);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      return { ctx, w, h };
+    }
+
+    function drawActivityChart(labels, values) {
+      const canvas = document.getElementById('activityChart');
+      const { ctx, w, h } = prepCanvas(canvas);
+      const max = Math.max(1, ...values);
+      const gap = 12;
+      const barW = (w - gap * (values.length + 1)) / values.length;
+
+      ctx.fillStyle = '#8fa8d8';
+      ctx.font = '12px Segoe UI';
+      values.forEach((v, i) => {
+        const x = gap + i * (barW + gap);
+        const bh = (h - 50) * (v / max);
+        const y = h - 24 - bh;
+        const grad = ctx.createLinearGradient(0, y, 0, y + bh);
+        grad.addColorStop(0, '#00c6ff');
+        grad.addColorStop(1, '#0072ff');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barW, bh);
+
+        ctx.fillStyle = '#9fb5de';
+        ctx.fillText(String(v), x + 4, y - 4);
+        ctx.fillText(labels[i].slice(5), x, h - 8);
+      });
+    }
+
+    function drawBalanceChart(points) {
+      const canvas = document.getElementById('balanceChart');
+      const { ctx, w, h } = prepCanvas(canvas);
+      if (!points || points.length < 2) {
+        ctx.fillStyle = '#9ca8c7';
+        ctx.fillText('Недостаточно данных', 10, 24);
+        return;
+      }
+
+      const vals = points.map(p => Number(p.balance || 0));
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const range = Math.max(1, max - min);
+
+      ctx.strokeStyle = '#2d406c';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        const y = 20 + i * ((h - 40) / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#2ee58a';
+      ctx.beginPath();
+      vals.forEach((v, i) => {
+        const x = (i / (vals.length - 1)) * (w - 20) + 10;
+        const y = h - 20 - ((v - min) / range) * (h - 40);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    function drawWinsChart(wins, losses) {
+      const canvas = document.getElementById('winsChart');
+      const { ctx, w, h } = prepCanvas(canvas);
+      const total = Math.max(1, wins + losses);
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = Math.min(w, h) * 0.32;
+
+      const winAngle = (wins / total) * Math.PI * 2;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.fillStyle = '#2ee58a';
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + winAngle);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.fillStyle = '#ff5d73';
+      ctx.arc(cx, cy, r, -Math.PI / 2 + winAngle, -Math.PI / 2 + Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0b1020';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#d9e2f6';
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(`W ${wins} / L ${losses}`, cx, cy + 4);
+      ctx.textAlign = 'start';
+    }
+
+    function setAdminSubtab(name) {
+      const requested = name || 'dashboard';
+      let target = requested;
+      if (requested === 'ngrok' && els.adminNgrokTabBtn.classList.contains('hidden')) target = 'dashboard';
+      if (requested === 'economy' && els.adminEconomyTabBtn.classList.contains('hidden')) target = 'dashboard';
+      els.adminSubtabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.adminTab === target));
+      els.adminSubtabs.forEach(tab => tab.classList.toggle('active', tab.id === `admin-tab-${target}`));
+    }
+
+    function avatarHtml(username, avatarUrl = '') {
+      const letter = (username || '?').trim().charAt(0).toUpperCase() || '?';
+      const cleanUrl = String(avatarUrl || '').trim();
+      if (isAvatarSourceAllowed(cleanUrl)) {
+        return `<span class="avatar"><img src="${esc(cleanUrl)}" alt="${esc(username || 'avatar')}" loading="lazy" /></span>`;
+      }
+      return `<span class="avatar">${esc(letter)}</span>`;
+    }
+
+    function renderSupportWidget() {
+      const rows = state.supportMessages || [];
+      els.supportMessages.innerHTML = rows.length
+        ? rows.map(m => `
+          <div class="support-msg ${m.sender_role === 'admin' ? 'admin' : ''}">
+            <div style="font-size:12px; color:#9ca8c7;">${esc(m.sender_username)} • ${esc(m.timestamp)}</div>
+            <div>${esc(m.message)}</div>
+          </div>
+        `).join('')
+        : '<div class="muted">Пока нет сообщений</div>';
+      els.supportMessages.scrollTop = els.supportMessages.scrollHeight;
+    }
+
+    function renderSupportUnreadBadge() {
+      const n = Number(state.supportUnread || 0);
+      els.supportUnreadBadge.textContent = String(n);
+      els.supportUnreadBadge.classList.toggle('hidden', n <= 0);
+    }
+
+    function renderNotificationsBadge() {
+      const n = Number(state.notificationsUnread || 0);
+      els.notifyBadge.textContent = String(n);
+      els.notifyBadge.classList.toggle('hidden', n <= 0);
+    }
+
+    function renderMessengerTabTitle() {
+      els.messengerTabBtn.textContent = 'Мессенджер';
+    }
+
+    function renderNotificationsList() {
+      const rows = state.notifications || [];
+      els.notifyList.innerHTML = rows.length
+        ? rows.map((n) => `
+          <div class="notify-item ${n.read ? '' : 'unread'}">
+            <div style="display:flex; justify-content:space-between; gap:8px;">
+              <b>${esc(n.title || 'Уведомление')}</b>
+              <span class="muted" style="font-size:12px;">${esc(n.timestamp || '')}</span>
+            </div>
+            <div style="margin-top:6px;">${esc(n.message || '')}</div>
+          </div>
+        `).join('')
+        : '<div class="muted">Пока нет уведомлений</div>';
+    }
+
+    async function loadNotifications(markRead = false) {
+      if (!state.user) return;
+      try {
+        const res = await api(`/api/notifications?limit=120&mark_read=${markRead ? '1' : '0'}`);
+        state.notifications = res.notifications || [];
+        state.notificationsUnread = Number(res.unread_count || 0);
+        renderNotificationsBadge();
+        if (markRead || !els.notifyPanel.classList.contains('hidden')) {
+          renderNotificationsList();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function setAvatarElement(el, username, avatarUrl = '') {
+      if (!el) return;
+      const letter = (username || '?').trim().charAt(0).toUpperCase() || '?';
+      const cleanUrl = String(avatarUrl || '').trim();
+      if (isAvatarSourceAllowed(cleanUrl)) {
+        el.innerHTML = `<img src="${esc(cleanUrl)}" alt="${esc(username || 'avatar')}" loading="lazy" />`;
+      } else {
+        el.textContent = letter;
+      }
+    }
+
+    function setMessengerMode(mode) {
+      state.messengerMode = 'internal';
+      els.messengerModeButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.mode === 'internal'));
+      if (els.messengerModeInternal) {
+        els.messengerModeInternal.classList.add('active');
+      }
+      if (els.messengerModeTelegram) {
+        els.messengerModeTelegram.classList.remove('active');
+      }
+      setMessengerSidebarTab(state.messengerSidebarTab || 'profile');
+    }
+
+    function setMessengerSidebarTab(tab) {
+      const normalized = tab === 'chats' || tab === 'create' ? tab : 'profile';
+      state.messengerSidebarTab = normalized;
+      if (Array.isArray(els.messengerSideTabButtons)) {
+        els.messengerSideTabButtons.forEach((btn) => {
+          const isActive = String(btn.dataset.msTab || '') === normalized;
+          btn.classList.toggle('active', isActive);
+        });
+      }
+      if (els.messengerPanelProfile) {
+        els.messengerPanelProfile.classList.toggle('active', normalized === 'profile');
+      }
+      if (els.messengerPanelChats) {
+        els.messengerPanelChats.classList.toggle('active', normalized === 'chats');
+      }
+      if (els.messengerPanelCreate) {
+        els.messengerPanelCreate.classList.toggle('active', normalized === 'create');
+      }
+    }
+
+    function renderMessengerCurrentHeader() {
+      const cur = state.messengerCurrent || { type: 'none', title: 'Выбери чат', sub: 'Общий чат отключен' };
+      els.messengerDialogTitle.textContent = cur.title || 'Выбери чат';
+      els.messengerDialogSub.textContent = cur.sub || 'Общий чат отключен';
+      const canCall = cur.type === 'user' && Number(cur.userId || 0) > 0;
+      els.messengerCallBtn.disabled = !canCall || Boolean(state.call?.active);
+      els.messengerCallBtn.textContent = state.call?.active ? 'Звонок идёт' : 'Позвонить';
+      if (cur.type === 'channel') {
+        els.publicChatInput.placeholder = 'Сообщение в канал...';
+      } else if (cur.type === 'none') {
+        els.publicChatInput.placeholder = 'Выбери диалог или канал...';
+      } else {
+        els.publicChatInput.placeholder = 'Личное сообщение...';
+      }
+    }
+
+    function renderMessengerMessages() {
+      const rows = state.messengerMessages || [];
+      const cur = state.messengerCurrent || { type: 'none' };
+      const emptyText = cur.type === 'none'
+        ? 'Общий чат отключен. Выбери личный диалог или канал.'
+        : 'Пока нет сообщений';
+      els.publicChatMessages.innerHTML = rows.length
+        ? rows.map((m) => {
+          const fromMe = Boolean(m.from_me || (state.user && Number(m.sender_id || 0) === Number(state.user.id || 0)));
+          const senderName = String(m.sender_username || m.username || 'user');
+          const senderVipLevel = Number(m.sender_vip_level || 0);
+          return `
+            <div class="msg-row ${fromMe ? 'me' : ''}">
+              ${fromMe ? '' : avatarHtml(senderName, m.sender_avatar_url)}
+              <div class="msg-bubble">
+                <div style="font-size:12px; color:#9ca8c7;">
+                  ${fromMe ? 'Ты' : `<span class="vip-${senderVipLevel}">${esc(senderName)}</span>`}
+                  • ${esc(m.timestamp || '')}
+                </div>
+                <div>${esc(m.message || '')}</div>
+              </div>
+            </div>
+          `;
+        }).join('')
+        : `<div class="muted">${emptyText}</div>`;
+      els.publicChatMessages.scrollTop = els.publicChatMessages.scrollHeight;
+    }
+
+    function renderMessengerIdentity() {
+      if (!state.user) return;
+      els.messengerIdentityName.textContent = state.user.full_name || state.user.username;
+      els.messengerIdentityUser.textContent = `@${state.user.username}`;
+      setAvatarElement(els.messengerAvatarPreview, state.user.username, state.user.avatar_url);
+      if (document.activeElement !== els.messengerAvatarInput) {
+        els.messengerAvatarInput.value = state.user.avatar_url || '';
+      }
+    }
+
+    function renderMessengerDialogsList() {
+      const rows = state.messengerDialogs || [];
+      const cur = state.messengerCurrent || {};
+      els.messengerDialogsList.innerHTML = rows.length
+        ? rows.map((d) => `
+          <div class="messenger-list-item ${cur.type === 'user' && Number(cur.userId || 0) === Number(d.peer?.id || 0) ? 'active' : ''}">
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+              ${avatarHtml(d.peer?.username, d.peer?.avatar_url)}
+              <div style="flex:1;">
+                <div style="font-size:13px;"><span class="vip-${Number(d.peer?.vip_level || 0)}">${esc(d.peer?.username || 'user')}</span> <span class="muted">${esc(d.timestamp || '')}</span></div>
+                <div class="muted" style="font-size:12px; margin-top:2px;">${esc(d.from_me ? 'Ты: ' : '')}${esc(d.last_message || '')}</div>
+                <button class="btn secondary" type="button" style="margin-top:6px; padding:5px 8px;" data-action="open-user" data-user-id="${Number(d.peer?.id || 0)}">Открыть диалог</button>
+              </div>
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">Пока нет личных диалогов</div>';
+    }
+
+    function renderMessengerSearchResults() {
+      const rows = state.messengerSearchResults || [];
+      const hasQuery = String(els.messengerSearchInput?.value || '').trim().length > 0;
+      els.messengerSearchResults.innerHTML = rows.length
+        ? rows.map((u) => {
+          const isMe = state.user && Number(state.user.id || 0) === Number(u.id || 0);
+          return `
+          <div class="messenger-list-item${isMe ? ' active' : ''}">
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+              ${avatarHtml(u.username, u.avatar_url)}
+              <div style="flex:1;">
+                <div><span class="vip-${Number(u.vip_level || 0)}">${esc(u.username)}</span></div>
+                <div class="muted" style="font-size:12px;">${esc(u.full_name || u.username)} • ${u.online ? 'онлайн' : 'оффлайн'}${isMe ? ' • это ты' : ''}</div>
+                ${isMe
+                  ? '<button class="btn secondary" type="button" style="margin-top:6px; padding:5px 8px;" disabled>Твой аккаунт</button>'
+                  : `<button class="btn secondary" type="button" style="margin-top:6px; padding:5px 8px;" data-action="open-user" data-user-id="${Number(u.id)}">Написать</button>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+        }).join('')
+        : `<div class="muted">${hasQuery ? 'Ничего не найдено' : 'Введи username и нажми Поиск'}</div>`;
+    }
+
+    function renderMessengerChannelsList() {
+      const joined = state.messengerJoinedChannels || [];
+      const discover = state.messengerDiscoverChannels || [];
+      const cur = state.messengerCurrent || {};
+
+      const joinedHtml = joined.length
+        ? joined.map((ch) => `
+          <div class="messenger-list-item ${cur.type === 'channel' && Number(cur.channelId || 0) === Number(ch.id || 0) ? 'active' : ''}">
+            <div><b>#${esc(ch.title || '')}</b> <span class="muted">ID ${Number(ch.id || 0)}</span></div>
+            <div class="muted" style="font-size:12px;">@${esc(ch.slug || '')} • участников: ${fmt(ch.members_count || 0)}</div>
+            <button class="btn secondary" type="button" style="margin-top:6px; padding:5px 8px;" data-action="open-channel" data-channel-id="${Number(ch.id || 0)}">Открыть канал</button>
+          </div>
+        `).join('')
+        : '<div class="muted">Нет ваших каналов</div>';
+
+      const discoverHtml = discover.length
+        ? discover.slice(0, 20).map((ch) => `
+          <div class="messenger-list-item">
+            <div><b>#${esc(ch.title || '')}</b> <span class="muted">ID ${Number(ch.id || 0)}</span></div>
+            <div class="muted" style="font-size:12px;">@${esc(ch.slug || '')} • owner: ${esc(ch.owner_username || '')}</div>
+            <button class="btn secondary" type="button" style="margin-top:6px; padding:5px 8px;" data-action="join-channel" data-channel-id="${Number(ch.id || 0)}">Войти в канал</button>
+          </div>
+        `).join('')
+        : '<div class="muted">Нет новых открытых каналов</div>';
+
+      els.messengerChannelsList.innerHTML = `
+        <div class="muted">Мои каналы</div>
+        ${joinedHtml}
+        <div class="muted" style="margin-top:6px;">Открытые каналы</div>
+        ${discoverHtml}
+      `;
+    }
+
+    function renderMessengerCalls() {
+      const rows = state.messengerCalls || [];
+      els.messengerCallLog.innerHTML = rows.length
+        ? rows.map((c) => `
+          <div class="messenger-list-item" style="padding:7px;">
+            <div><b>${c.incoming ? 'Входящий' : 'Исходящий'}</b> • ${esc(c.timestamp || '')}</div>
+            <div class="muted" style="font-size:12px;">
+              ${c.incoming ? esc(c.caller_username || '') : esc(c.target_username || '')}
+              • ${esc(c.status || '')}
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">История звонков пуста</div>';
+    }
+
+    function stopMediaStream(stream) {
+      if (!stream || typeof stream.getTracks !== 'function') return;
+      stream.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (_) {}
+      });
+    }
+
+    function supportsSinkId() {
+      return Boolean(els.callLocalVideo && typeof els.callLocalVideo.setSinkId === 'function');
+    }
+
+    function attachCallPreviewStream(stream) {
+      if (!els.callLocalVideo) return;
+      if (els.callLocalVideo.srcObject !== stream) {
+        els.callLocalVideo.srcObject = stream || null;
+      }
+      if (stream) {
+        els.callLocalVideo.play().catch(() => {});
+      }
+    }
+
+    function clearScreenShare() {
+      if (state.call.screenStream) {
+        stopMediaStream(state.call.screenStream);
+      }
+      state.call.screenStream = null;
+      state.call.screenEnabled = false;
+    }
+
+    function resetCallStateLocal() {
+      clearScreenShare();
+      if (state.call.localStream) {
+        stopMediaStream(state.call.localStream);
+      }
+      state.call.active = false;
+      state.call.peerUserId = null;
+      state.call.peerLabel = '';
+      state.call.currentCallId = null;
+      state.call.micEnabled = true;
+      state.call.cameraEnabled = true;
+      state.call.localStream = null;
+      attachCallPreviewStream(null);
+      renderCallControls();
+    }
+
+    async function setCallOutputDevice(deviceId, silent = false) {
+      const nextDeviceId = String(deviceId || 'default');
+      state.call.outputDeviceId = nextDeviceId;
+      if (!supportsSinkId()) {
+        if (!silent) showToast('Выбор наушников не поддерживается этим браузером', 'bad');
+        renderCallControls();
+        return;
+      }
+      try {
+        await els.callLocalVideo.setSinkId(nextDeviceId);
+      } catch (err) {
+        if (!silent) showToast(`Не удалось переключить вывод звука: ${err.message}`, 'bad');
+      }
+      renderCallControls();
+    }
+
+    async function refreshCallOutputDevices(silent = false) {
+      if (!els.callOutputSelect) return;
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== 'function') {
+        state.call.outputDevices = [];
+        els.callOutputSelect.innerHTML = '<option value="default">Вывод звука: недоступно</option>';
+        els.callOutputSelect.disabled = true;
+        if (els.callDeviceHint) {
+          els.callDeviceHint.textContent = 'Браузер не поддерживает список аудиоустройств.';
+        }
+        return;
+      }
+
+      let devices = [];
+      try {
+        devices = await navigator.mediaDevices.enumerateDevices();
+      } catch (_) {
+        devices = [];
+      }
+      const outputs = devices.filter((device) => String(device.kind || '') === 'audiooutput');
+      state.call.outputDevices = outputs;
+
+      const options = [{ deviceId: 'default', label: 'Вывод звука: по умолчанию' }];
+      outputs.forEach((device, index) => {
+        const id = String(device.deviceId || '').trim();
+        if (!id || id === 'default') return;
+        const label = String(device.label || '').trim() || `Наушники/колонки ${index + 1}`;
+        options.push({ deviceId: id, label: `Вывод: ${label}` });
+      });
+
+      const currentId = String(state.call.outputDeviceId || 'default');
+      const selectedId = options.some((o) => o.deviceId === currentId) ? currentId : 'default';
+      state.call.outputDeviceId = selectedId;
+
+      els.callOutputSelect.innerHTML = options
+        .map((o) => `<option value="${esc(o.deviceId)}">${esc(o.label)}</option>`)
+        .join('');
+      els.callOutputSelect.value = selectedId;
+
+      const sinkSupported = supportsSinkId();
+      els.callOutputSelect.disabled = !sinkSupported;
+      if (els.callDeviceHint) {
+        if (!sinkSupported) {
+          els.callDeviceHint.textContent = 'Для выбора наушников нужен Chromium-браузер с поддержкой setSinkId.';
+        } else if (options.length <= 1) {
+          els.callDeviceHint.textContent = 'Найдено только системное устройство вывода.';
+        } else {
+          els.callDeviceHint.textContent = 'Выбери устройство вывода (наушники/колонки) в списке выше.';
+        }
+      }
+
+      await setCallOutputDevice(selectedId, true);
+      if (!silent) {
+        showToast('Список устройств обновлён');
+      }
+    }
+
+    function renderCallControls() {
+      const call = state.call || {};
+      const streamForPreview = call.active
+        ? (call.screenEnabled && call.screenStream ? call.screenStream : call.localStream)
+        : null;
+      const hasMicTrack = Boolean(call.localStream && call.localStream.getAudioTracks().length);
+      const hasCameraTrack = Boolean(call.localStream && call.localStream.getVideoTracks().length);
+      const canShareScreen = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function');
+      const cur = state.messengerCurrent || {};
+      const canStartFromCurrentDialog = cur.type === 'user' && Number(cur.userId || 0) > 0;
+
+      attachCallPreviewStream(streamForPreview || null);
+      if (els.callLocalVideo) {
+        els.callLocalVideo.classList.toggle('hidden', !streamForPreview);
+      }
+
+      els.callMicBtn.disabled = !call.active || !hasMicTrack;
+      els.callCameraBtn.disabled = !call.active || !hasCameraTrack;
+      els.callScreenBtn.disabled = !call.active || !canShareScreen;
+      els.callEndBtn.disabled = !call.active;
+
+      els.callMicBtn.textContent = `🎙️ Микрофон: ${call.micEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+      els.callCameraBtn.textContent = `📷 Камера: ${call.cameraEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+      els.callScreenBtn.textContent = `🖥 Экран: ${call.screenEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+
+      if (!call.active) {
+        els.callStatus.textContent = 'Звонок не активен';
+      } else {
+        const peerLabel = call.peerLabel || 'пользователем';
+        const modeText = call.screenEnabled ? 'Демонстрация экрана включена' : 'Обычный режим';
+        els.callStatus.textContent = `Звонок с ${peerLabel}. ${modeText}.`;
+      }
+
+      els.messengerCallBtn.disabled = !canStartFromCurrentDialog || Boolean(call.active);
+      els.messengerCallBtn.textContent = call.active ? 'Звонок идёт' : 'Позвонить';
+    }
+
+    async function ensureLocalCallMedia() {
+      const current = state.call.localStream;
+      if (current && current.getTracks().some((track) => track.readyState === 'live')) {
+        return current;
+      }
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        throw new Error('Браузер не поддерживает микрофон/камеру для звонка');
+      }
+      const audioConstraints = { echoCancellation: true, noiseSuppression: true };
+      const videoConstraints = { width: { ideal: 1280 }, height: { ideal: 720 } };
+      const variants = [
+        { audio: audioConstraints, video: videoConstraints },
+        { audio: audioConstraints, video: false },
+        { audio: false, video: videoConstraints }
+      ];
+
+      let stream = null;
+      let lastError = null;
+      for (const constraints of variants) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          break;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      if (!stream) {
+        const errorName = String(lastError?.name || '');
+        if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+          throw new Error('Нет доступа к микрофону/камере. Разрешите доступ в браузере.');
+        }
+        throw new Error('Устройство не найдено. Подключите микрофон/камеру и попробуйте снова.');
+      }
+      if (!stream.getTracks().length) {
+        throw new Error('Не удалось получить медиа-поток для звонка.');
+      }
+
+      state.call.localStream = stream;
+      const audioTracks = stream.getAudioTracks();
+      const videoTracks = stream.getVideoTracks();
+      state.call.micEnabled = audioTracks.length ? audioTracks.some((track) => track.enabled) : false;
+      state.call.cameraEnabled = videoTracks.length ? videoTracks.some((track) => track.enabled) : false;
+
+      audioTracks.forEach((track) => {
+        track.addEventListener('ended', () => {
+          state.call.micEnabled = false;
+          renderCallControls();
+        });
+      });
+      videoTracks.forEach((track) => {
+        track.addEventListener('ended', () => {
+          state.call.cameraEnabled = false;
+          renderCallControls();
+        });
+      });
+
+      await refreshCallOutputDevices(true);
+      renderCallControls();
+      return stream;
+    }
+
+    async function endMessengerCall({ sendRequest = true, silent = false, reloadLog = true } = {}) {
+      const hadCall = Boolean(state.call.active || state.call.currentCallId);
+      const callId = Number(state.call.currentCallId || 0);
+      if (sendRequest && state.user && callId > 0) {
+        try {
+          await api('/api/messenger/call/end', {
+            method: 'POST',
+            body: { call_id: callId, status: 'ended' }
+          });
+        } catch (err) {
+          if (!silent) {
+            showToast(err.message, 'bad');
+          }
+        }
+      }
+      resetCallStateLocal();
+      if (reloadLog && state.user) {
+        await loadMessengerCalls();
+      }
+      if (hadCall && !silent) {
+        showToast('Звонок завершён');
+      }
+    }
+
+    async function toggleCallMic() {
+      if (!state.call.active) throw new Error('Сначала начните звонок');
+      const stream = await ensureLocalCallMedia();
+      const tracks = stream.getAudioTracks();
+      if (!tracks.length) throw new Error('Микрофон не найден');
+      const next = !state.call.micEnabled;
+      tracks.forEach((track) => {
+        track.enabled = next;
+      });
+      state.call.micEnabled = next;
+      renderCallControls();
+      showToast(next ? 'Микрофон включён' : 'Микрофон выключен');
+    }
+
+    async function toggleCallCamera() {
+      if (!state.call.active) throw new Error('Сначала начните звонок');
+      const stream = await ensureLocalCallMedia();
+      const tracks = stream.getVideoTracks();
+      if (!tracks.length) throw new Error('Камера не найдена');
+      const next = !state.call.cameraEnabled;
+      tracks.forEach((track) => {
+        track.enabled = next;
+      });
+      state.call.cameraEnabled = next;
+      renderCallControls();
+      showToast(next ? 'Камера включена' : 'Камера выключена');
+    }
+
+    async function toggleCallScreenShare() {
+      if (!state.call.active) throw new Error('Сначала начните звонок');
+      if (state.call.screenEnabled) {
+        clearScreenShare();
+        renderCallControls();
+        showToast('Демонстрация экрана выключена');
+        return;
+      }
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+        throw new Error('Браузер не поддерживает демонстрацию экрана');
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true
+      });
+      state.call.screenStream = stream;
+      state.call.screenEnabled = true;
+      const [screenTrack] = stream.getVideoTracks();
+      if (screenTrack) {
+        screenTrack.addEventListener('ended', () => {
+          clearScreenShare();
+          renderCallControls();
+          showToast('Демонстрация экрана завершена');
+        });
+      }
+      renderCallControls();
+      showToast('Демонстрация экрана включена');
+    }
+
+    function renderMessengerPanels() {
+      renderMessengerIdentity();
+      renderMessengerCurrentHeader();
+      renderMessengerMessages();
+      renderMessengerDialogsList();
+      renderMessengerSearchResults();
+      renderMessengerChannelsList();
+      renderMessengerCalls();
+      renderCallControls();
+      setMessengerSidebarTab(state.messengerSidebarTab || 'profile');
+    }
+
+    async function loadPublicChat(markRead = false) {
+      if (!state.user) return;
+      try {
+        const cur = state.messengerCurrent || {};
+        const shouldMarkRead = Boolean(markRead && cur.type === 'public');
+        const res = await api(`/api/chat/public/messages?limit=220&mark_read=${shouldMarkRead ? '1' : '0'}`);
+        state.publicChatMessages = res.messages || [];
+        state.publicChatUnread = Number(res.unread_count || 0);
+        renderMessengerTabTitle();
+        if ((cur.type || 'public') === 'public') {
+          state.messengerMessages = state.publicChatMessages;
+          renderMessengerMessages();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadMessengerDialogs() {
+      if (!state.user) return;
+      try {
+        const res = await api('/api/messenger/dialogs?limit=40');
+        state.messengerDialogs = res.dialogs || [];
+        renderMessengerDialogsList();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadMessengerChannels() {
+      if (!state.user) return;
+      try {
+        const res = await api('/api/messenger/channels');
+        state.messengerJoinedChannels = res.joined || [];
+        state.messengerDiscoverChannels = res.discover || [];
+        renderMessengerChannelsList();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadMessengerCalls() {
+      if (!state.user) return;
+      try {
+        const res = await api('/api/messenger/calls?limit=30');
+        state.messengerCalls = res.calls || [];
+        if (state.call.active && Number(state.call.currentCallId || 0) > 0) {
+          const currentCall = state.messengerCalls.find((call) => Number(call.id || 0) === Number(state.call.currentCallId || 0));
+          if (currentCall && String(currentCall.status || '').toLowerCase() !== 'ringing') {
+            resetCallStateLocal();
+          }
+        }
+        const incomingRinging = state.messengerCalls.find((call) => call.incoming && String(call.status || '').toLowerCase() === 'ringing');
+        if (incomingRinging) {
+          const incomingId = Number(incomingRinging.id || 0);
+          if (incomingId > 0 && incomingId !== Number(state.call.lastIncomingCallId || 0)) {
+            state.call.lastIncomingCallId = incomingId;
+            showToast(`Входящий звонок от @${incomingRinging.caller_username}`);
+          }
+        }
+        renderMessengerCalls();
+        renderCallControls();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function searchMessengerUsers(queryText) {
+      const q = String(queryText || '').trim();
+      if (!q) {
+        state.messengerSearchResults = [];
+        renderMessengerSearchResults();
+        return;
+      }
+      const res = await api(`/api/messenger/users/search?q=${encodeURIComponent(q)}`);
+      state.messengerSearchResults = res.users || [];
+      renderMessengerSearchResults();
+    }
+
+    async function openMessengerPublic(markRead = true) {
+      state.messengerCurrent = { type: 'none', userId: null, channelId: null, title: 'Выбери чат', sub: 'Общий чат отключен', avatarUrl: '' };
+      renderMessengerCurrentHeader();
+      state.messengerMessages = [];
+      renderMessengerMessages();
+      renderMessengerDialogsList();
+      renderMessengerChannelsList();
+    }
+
+    async function openMessengerUserDialog(userId, markReadPublic = false) {
+      const id = Number(userId || 0);
+      if (!id) throw new Error('Некорректный пользователь');
+      const res = await api(`/api/messenger/dialog/${id}?limit=240`);
+      state.messengerCurrent = {
+        type: 'user',
+        userId: Number(res.peer?.id || id),
+        channelId: null,
+        title: res.peer?.full_name || res.peer?.username || 'Диалог',
+        sub: `@${res.peer?.username || ''}`,
+        avatarUrl: res.peer?.avatar_url || ''
+      };
+      state.messengerMessages = res.messages || [];
+      renderMessengerCurrentHeader();
+      renderMessengerMessages();
+      renderMessengerDialogsList();
+    }
+
+    async function openMessengerChannel(channelId, markReadPublic = false) {
+      const id = Number(channelId || 0);
+      if (!id) throw new Error('Некорректный канал');
+      const res = await api(`/api/messenger/channels/${id}/messages?limit=260`);
+      const channel = res.channel || {};
+      state.messengerCurrent = {
+        type: 'channel',
+        userId: null,
+        channelId: Number(channel.id || id),
+        title: `#${channel.title || 'Канал'}`,
+        sub: `@${channel.slug || ''} • ID ${Number(channel.id || id)}`,
+        avatarUrl: ''
+      };
+      state.messengerMessages = res.messages || [];
+      renderMessengerCurrentHeader();
+      renderMessengerMessages();
+      renderMessengerChannelsList();
+    }
+
+    async function loadMessengerWorkspace(markReadPublic = false) {
+      if (!state.user) return;
+      setMessengerMode(state.messengerMode || 'internal');
+      renderMessengerIdentity();
+      await Promise.all([loadMessengerDialogs(), loadMessengerChannels(), loadMessengerCalls()]);
+      const firstDialogUserId = Number(state.messengerDialogs?.[0]?.peer?.id || 0);
+      const firstChannelId = Number(state.messengerJoinedChannels?.[0]?.id || 0);
+      const openFallback = async () => {
+        if (firstDialogUserId > 0) {
+          await openMessengerUserDialog(firstDialogUserId, markReadPublic);
+          return;
+        }
+        if (firstChannelId > 0) {
+          await openMessengerChannel(firstChannelId, markReadPublic);
+          return;
+        }
+        await openMessengerPublic(markReadPublic);
+      };
+      const cur = state.messengerCurrent || {};
+      if (cur.type === 'user' && Number(cur.userId || 0) > 0) {
+        try {
+          await openMessengerUserDialog(cur.userId, markReadPublic);
+        } catch (_) {
+          await openFallback();
+        }
+      } else if (cur.type === 'channel' && Number(cur.channelId || 0) > 0) {
+        try {
+          await openMessengerChannel(cur.channelId, markReadPublic);
+        } catch (_) {
+          await openFallback();
+        }
+      } else {
+        await openFallback();
+      }
+      renderMessengerPanels();
+    }
+
+    async function loadSupportWidgetMessages(markRead = true) {
+      if (!state.user) return;
+      try {
+        const res = await api(`/api/support/messages?mark_read=${markRead ? '1' : '0'}`);
+        state.supportMessages = res.messages || [];
+        state.supportUnread = Number(res.unread_count || 0);
+        renderSupportUnreadBadge();
+        if (markRead || !els.supportWidget.classList.contains('hidden')) {
+          renderSupportWidget();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadAdmin() {
+      try {
+        const overview = await api('/api/admin/overview');
+        state.adminOverview = overview;
+        state.adminLevel = Number(overview.admin_level || 0);
+        state.adminCaps = overview.admin_caps || {};
+      } catch (e) {
+        showToast(e.message, 'bad');
+        return;
+      }
+
+      if (state.adminCaps.can_view_logs) {
+        try {
+          const logs = await api('/api/admin/logs?limit=120');
+          state.adminLogs = logs.logs || [];
+        } catch (_) {
+          state.adminLogs = [];
+        }
+      } else {
+        state.adminLogs = [];
+      }
+
+      if (state.adminCaps.can_support) {
+        try {
+          const conv = await api('/api/admin/support/conversations');
+          state.adminSupportConversations = conv.conversations || [];
+          if (!state.adminSupportSelectedUserId && state.adminSupportConversations.length) {
+            state.adminSupportSelectedUserId = state.adminSupportConversations[0].user_id;
+          }
+          if (state.adminSupportSelectedUserId) {
+            try {
+              const msgs = await api(`/api/admin/support/messages/${state.adminSupportSelectedUserId}`);
+              state.adminSupportMessages = msgs.messages || [];
+              const target = msgs.target_user;
+              els.adminSupportTitle.textContent = target ? `Чат поддержки: ${target.username}` : 'Чат поддержки';
+            } catch (_) {
+              state.adminSupportSelectedUserId = null;
+              state.adminSupportMessages = [];
+              els.adminSupportTitle.textContent = 'Чат поддержки';
+            }
+          } else {
+            state.adminSupportMessages = [];
+            els.adminSupportTitle.textContent = 'Чат поддержки';
+          }
+          const chat = await api('/api/admin/chat/messages');
+          state.adminChatMessages = chat.messages || [];
+          state.adminChatUnread = Number(chat.unread_count || 0);
+        } catch (_) {
+          state.adminSupportConversations = [];
+          state.adminSupportMessages = [];
+          state.adminChatMessages = [];
+          state.adminChatUnread = 0;
+          els.adminSupportTitle.textContent = 'Чат поддержки';
+        }
+      } else {
+        state.adminSupportConversations = [];
+        state.adminSupportMessages = [];
+        state.adminChatMessages = [];
+        state.adminChatUnread = 0;
+        els.adminSupportTitle.textContent = 'Чат поддержки';
+      }
+
+      if (state.adminLevel >= 7) {
+        try {
+          const ngrok = await api('/api/admin/ngrok/status');
+          state.ngrokStatus = ngrok.status || null;
+        } catch (_) {
+          state.ngrokStatus = null;
+        }
+      } else {
+        state.ngrokStatus = null;
+      }
+
+      if (state.adminLevel >= 6) {
+        try {
+          const economy = await api('/api/admin/economy');
+          state.adminEconomy = economy;
+        } catch (_) {
+          state.adminEconomy = null;
+        }
+      } else {
+        state.adminEconomy = null;
+      }
+      renderAdmin();
+    }
+
+    function renderAdminVisibility() {
+      els.adminTabBtn.classList.toggle('hidden', !state.canAdmin);
+      if (!state.canAdmin) {
+        state.isAdmin = false;
+        state.adminPasswordSet = false;
+        state.adminEconomy = null;
+        if (document.getElementById('tab-admin').classList.contains('active')) setActiveTab('overview');
+        els.adminLoginWrap.classList.add('hidden');
+        els.adminPanelWrap.classList.add('hidden');
+        return;
+      }
+      renderAdminLoginForm();
+      const show = state.isAdmin;
+      els.adminLoginWrap.classList.toggle('hidden', show);
+      els.adminPanelWrap.classList.toggle('hidden', !show);
+      if (show) loadAdmin();
+    }
+
+    function renderAdmin() {
+      const data = state.adminOverview;
+      if (!data) return;
+      const caps = state.adminCaps || {};
+
+      els.adminLevelChip.textContent = `Уровень админки: ${data.admin_level} (${data.admin_level_name || '-'})`;
+      els.adminCapabilities.textContent =
+        `support=${caps.can_support ? 'да' : 'нет'}, модерация=${caps.can_warn_ban ? 'да' : 'нет'}, ` +
+        `логи=${caps.can_view_logs ? 'да' : 'нет'}, управление банком=${caps.can_manage_bank ? 'да' : 'нет'}, ` +
+        `выдача админки до уровня ${caps.max_assign_admin_level ?? 0}, бан до ${caps.max_ban_days ?? 0} дней` +
+        `${caps.can_permanent_ban ? ', есть бан навсегда' : ''}`;
+
+      els.adminOnline.textContent = fmt(data.online_users || 0);
+      els.adminSuspicious.textContent = fmt((data.suspicious_users || []).length);
+      els.adminOverdue.textContent = fmt((data.overdue_credits || []).length);
+      els.adminSupportUnread.textContent = fmt(data.support_unread || 0);
+      els.adminChatUnread.textContent = fmt(data.admin_chat_unread || 0);
+
+      const canUseNgrok = Number(data.admin_level || 0) >= 7;
+      const canUseEconomy = Number(data.admin_level || 0) >= 6;
+      els.adminEconomyTabBtn.classList.toggle('hidden', !canUseEconomy);
+      els.adminNgrokTabBtn.classList.toggle('hidden', !canUseNgrok);
+      const ngrokTabSection = document.getElementById('admin-tab-ngrok');
+      const economyTabSection = document.getElementById('admin-tab-economy');
+      ngrokTabSection.classList.toggle('hidden', !canUseNgrok);
+      economyTabSection.classList.toggle('hidden', !canUseEconomy);
+      if (!canUseNgrok && ngrokTabSection.classList.contains('active')) {
+        setAdminSubtab('dashboard');
+      }
+      if (!canUseEconomy && economyTabSection.classList.contains('active')) {
+        setAdminSubtab('dashboard');
+      }
+
+      const ngrok = state.ngrokStatus || {};
+      const provider = String(ngrok.provider || '').toLowerCase();
+      const providerLabel = provider === 'cloudflare_quick_tunnel'
+        ? 'Cloudflare'
+        : (provider === 'localhost_run'
+          ? 'localhost.run'
+          : (provider === 'serveo' ? 'Serveo' : 'Tunnel'));
+      const rawUrl = String(ngrok.public_url || '').trim();
+      let rawHost = '';
+      try {
+        rawHost = rawUrl ? String(new URL(rawUrl).hostname || '').toLowerCase() : '';
+      } catch (_) {
+        rawHost = '';
+      }
+      const isLegacyTunnelUrl = Boolean(rawHost && (rawHost.includes('ngrok') || rawHost.endsWith('serveo.net')));
+      const publicUrlToShow = isLegacyTunnelUrl ? '' : rawUrl;
+      const errorText = String(ngrok.error || '');
+      const hasBrokenRunningState = Boolean(
+        ngrok.running &&
+        !publicUrlToShow &&
+        (isLegacyTunnelUrl || /устаревш|legacy|ngrok|serveo/i.test(errorText))
+      );
+      els.adminNgrokState.textContent = ngrok.running ? `Включен (${providerLabel})` : 'Выключен';
+      if (publicUrlToShow) {
+        els.adminNgrokUrlLink.href = publicUrlToShow;
+        els.adminNgrokUrlLink.textContent = publicUrlToShow;
+      } else {
+        els.adminNgrokUrlLink.href = '#';
+        els.adminNgrokUrlLink.textContent = '-';
+      }
+      els.adminNgrokIp.textContent = publicUrlToShow ? (ngrok.public_ip || ngrok.public_host || '-') : '-';
+      els.adminNgrokPid.textContent = ngrok.pid ? String(ngrok.pid) : '-';
+      els.adminNgrokError.textContent = isLegacyTunnelUrl
+        ? 'Старая ngrok/serveo ссылка скрыта. Нажми Обновить статус или перезапусти сервер.'
+        : (errorText || (ngrok.available ? 'Без ошибок' : 'Нет cloudflared и ssh-клиента'));
+      els.adminNgrokStartBtn.disabled = !canUseNgrok || !ngrok.available || (Boolean(ngrok.running) && !hasBrokenRunningState);
+      els.adminNgrokStartBtn.textContent = hasBrokenRunningState ? 'Перезапустить Tunnel' : 'Включить Tunnel';
+      els.adminNgrokStopBtn.disabled = !canUseNgrok || !Boolean(ngrok.running);
+
+      const econ = state.adminEconomy || {};
+      els.adminUsdRateValue.textContent = econ.usd_rate ? fmtRate(econ.usd_rate) : '-';
+      els.adminUsdRateUpdatedAt.textContent = econ.usd_rate_updated_at || '-';
+
+      const canAssignAdmin = Boolean(caps.can_assign_admin);
+      const grantSubmitBtn = els.adminGrantForm.querySelector('button[type="submit"]');
+      els.adminGrantUsername.disabled = !canAssignAdmin;
+      els.adminGrantLevel.disabled = !canAssignAdmin;
+      if (grantSubmitBtn) {
+        grantSubmitBtn.disabled = !canAssignAdmin;
+        grantSubmitBtn.textContent = canAssignAdmin ? 'Выдать/изменить уровень' : 'Нужен уровень 6+';
+      }
+
+      const users = data.users || [];
+      els.adminUsersBody.innerHTML = users.length
+        ? users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td class="vip-${u.vip_level}">${esc(u.username)}</td>
+            <td>${fmt(u.balance)}</td>
+            <td>${fmtUsd(u.balance_usd)}</td>
+            <td>${u.vip_level} (${esc(u.vip_name)})</td>
+            <td>${u.level}</td>
+            <td style="color:${u.online ? '#9dffd0' : '#9ca8c7'};">${u.online ? 'Да' : 'Нет'}</td>
+            <td style="color:${u.suspicious ? '#ff5d73' : '#9dffd0'};">${u.suspicious ? 'Да' : 'Нет'}</td>
+            <td>
+              ${caps.can_manage_bank ? `
+                <button class="btn secondary admin-set-balance" data-id="${u.id}" style="padding:5px 8px;">Баланс</button>
+                <button class="btn secondary admin-set-vip" data-id="${u.id}" style="padding:5px 8px;">VIP</button>
+                <button class="btn secondary admin-set-level" data-id="${u.id}" style="padding:5px 8px;">Уровень</button>
+                <button class="btn secondary admin-reset-pass" data-id="${u.id}" style="padding:5px 8px;">Пароль</button>
+                <button class="btn secondary admin-set-susp" data-id="${u.id}" data-val="${u.suspicious ? 0 : 1}" style="padding:5px 8px;">${u.suspicious ? 'Снять ⚠' : '⚠ Mark'}</button>
+                <button class="btn danger admin-delete-user" data-id="${u.id}" data-username="${esc(u.username)}" style="padding:5px 8px;">Удалить</button>
+              ` : '<span class="muted">Только просмотр</span>'}
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="9" class="muted">Пользователей нет</td></tr>';
+
+      const admins = data.admins || [];
+      els.adminAdminsBody.innerHTML = admins.length
+        ? admins.map(a => `
+          <tr>
+            <td>${a.id}</td>
+            <td>${esc(a.username)}</td>
+            <td>${esc(a.full_name || '-')}</td>
+            <td>${a.admin_level} (${esc(a.admin_level_name)})</td>
+            <td style="color:${a.online ? '#9dffd0' : '#9ca8c7'};">${a.online ? 'Да' : 'Нет'}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="muted">Админов нет</td></tr>';
+
+      els.adminModerationBody.innerHTML = users.length
+        ? users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td>${esc(u.username)}</td>
+            <td>${u.warnings || 0}</td>
+            <td>${esc(u.banned_until || '-')}</td>
+            <td>
+              ${caps.can_warn_ban ? `
+                <button class="btn secondary admin-warn-user" data-id="${u.id}" style="padding:5px 8px;">Warn</button>
+                <button class="btn secondary admin-clear-warns-user" data-id="${u.id}" style="padding:5px 8px;">Снять варны</button>
+                <button class="btn danger admin-ban-user" data-id="${u.id}" style="padding:5px 8px;">Ban</button>
+                ${caps.can_permanent_ban ? `<button class="btn danger admin-perma-ban-user" data-id="${u.id}" style="padding:5px 8px;">PERM</button>` : ''}
+                    <button class="btn secondary admin-unban-user" data-id="${u.id}" style="padding:5px 8px;">Разбан</button>
+              ` : '<span class="muted">Недоступно</span>'}
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="muted">Нет пользователей</td></tr>';
+
+      els.adminLogsBody.innerHTML = state.adminLogs.length
+        ? state.adminLogs.map(log => `
+          <tr>
+            <td>${log.id}</td>
+            <td>${esc(log.username || 'system')}</td>
+            <td>${esc(log.action)}</td>
+            <td>${esc(log.timestamp)}</td>
+            <td><code>${esc(JSON.stringify(log.info || {}))}</code></td>
+          </tr>
+        `).join('')
+        : `<tr><td colspan="5" class="muted">${caps.can_view_logs ? 'Логов нет' : 'Недостаточно прав для просмотра логов'}</td></tr>`;
+
+      const credits = data.credits || [];
+      els.adminCreditsBody.innerHTML = credits.length
+        ? credits.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${esc(c.username)}</td>
+            <td>${fmt(c.amount)}</td>
+            <td>${fmt(c.total_to_pay)}</td>
+            <td>${esc(c.due_at)}</td>
+            <td style="color:${c.overdue ? '#ff5d73' : '#9dffd0'};">${c.overdue ? 'Просрочен' : 'Активен'}</td>
+            <td>
+              ${caps.can_manage_bank ? `
+                <button class="btn secondary admin-credit-extend" data-id="${c.id}" style="padding:5px 8px;">+Дни</button>
+                <button class="btn danger admin-credit-close" data-id="${c.id}" style="padding:5px 8px;">Закрыть</button>
+              ` : '<span class="muted">Недоступно</span>'}
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="7" class="muted">Активных кредитов нет</td></tr>';
+
+      const conv = state.adminSupportConversations || [];
+      els.adminSupportUsersBody.innerHTML = caps.can_support
+        ? (conv.length
+        ? conv.map(c => `
+          <tr>
+            <td>
+              <button class="btn secondary admin-open-support" data-id="${c.user_id}" style="padding:5px 8px;">
+                ${esc(c.username)}
+              </button>
+            </td>
+            <td>${esc(c.last_timestamp || '-')}</td>
+              <td>${fmt(c.unread_user_messages || 0)}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="3" class="muted">Диалогов нет</td></tr>')
+        : '<tr><td colspan="3" class="muted">Нужен уровень админки 2+</td></tr>';
+
+      const supportMsgs = state.adminSupportMessages || [];
+      els.adminSupportMessages.innerHTML = caps.can_support
+        ? (supportMsgs.length
+        ? supportMsgs.map(m => `
+          <div class="support-msg ${m.sender_role === 'admin' ? 'admin' : ''}">
+            <div style="font-size:12px; color:#9ca8c7;">${esc(m.sender_username)} • ${esc(m.timestamp)}</div>
+            <div>${esc(m.message)}</div>
+          </div>
+        `).join('')
+        : '<div class="muted">Выберите диалог</div>')
+        : '<div class="muted">Нужен уровень админки 2+</div>';
+
+      const chatMsgs = state.adminChatMessages || [];
+      els.adminChatMessages.innerHTML = caps.can_support
+        ? (chatMsgs.length
+        ? chatMsgs.map(m => `
+          <div class="support-msg admin" style="display:flex; gap:8px; align-items:flex-start;">
+            ${avatarHtml(m.sender_username)}
+            <div>
+              <div style="font-size:12px; color:#9ca8c7;">${esc(m.sender_username)} • L${m.sender_admin_level} • ${esc(m.timestamp)}</div>
+              <div>${esc(m.message)}</div>
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">Сообщений пока нет</div>')
+        : '<div class="muted">Нужен уровень админки 2+</div>';
+
+      const supportReplyBtn = els.adminSupportReplyForm.querySelector('button[type="submit"]');
+      els.adminSupportReplyText.disabled = !caps.can_support;
+      if (supportReplyBtn) supportReplyBtn.disabled = !caps.can_support;
+      const adminChatBtn = els.adminChatForm.querySelector('button[type="submit"]');
+      els.adminChatInput.disabled = !caps.can_support;
+      if (adminChatBtn) adminChatBtn.disabled = !caps.can_support;
+
+      const economyEnabled = Number(data.admin_level || 0) >= 6;
+      els.adminUsdRateInput.disabled = !economyEnabled;
+      const usdRateBtn = els.adminUsdRateForm.querySelector('button[type="submit"]');
+      if (usdRateBtn) usdRateBtn.disabled = !economyEnabled;
+    }
+
+    async function setAdminBalance(userId) {
+      const currency = (prompt('Валюта баланса (RUB/USD):', 'RUB') || '').trim().toUpperCase();
+      if (!currency) return;
+      if (currency !== 'RUB' && currency !== 'USD') {
+        showToast('Валюта должна быть RUB или USD', 'bad');
+        return;
+      }
+      const val = prompt(`Новый баланс ${currency}:`);
+      if (!val) return;
+      try {
+        await api('/api/admin/user/balance', { method: 'POST', body: { user_id: Number(userId), currency, balance: Number(val) } });
+        showToast('Баланс обновлён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function setAdminVip(userId) {
+      const val = prompt('Новый VIP (0-4):');
+      if (val === null) return;
+      try {
+        await api('/api/admin/user/vip', { method: 'POST', body: { user_id: Number(userId), vip_level: Number(val) } });
+        showToast('VIP обновлён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function setAdminLevel(userId) {
+      const val = prompt('Новый игровой уровень (1-100):');
+      if (val === null) return;
+      try {
+        await api('/api/admin/user/level', { method: 'POST', body: { user_id: Number(userId), level: Number(val) } });
+        showToast('Уровень обновлён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function resetAdminPassword(userId) {
+      const val = prompt('Новый пароль для пользователя (мин 6):');
+      if (!val) return;
+      try {
+        await api('/api/admin/user/reset_password', { method: 'POST', body: { user_id: Number(userId), new_password: val } });
+        showToast('Пароль пользователя обновлён');
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function setAdminSuspicious(userId, suspicious) {
+      try {
+        await api('/api/admin/user/suspicious', { method: 'POST', body: { user_id: Number(userId), suspicious: Number(suspicious) === 1 } });
+        showToast('Статус обновлён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function extendAdminCredit(creditId) {
+      const val = prompt('На сколько дней продлить? (1-30)');
+      if (val === null) return;
+      try {
+        await api('/api/admin/credit/extend', { method: 'POST', body: { credit_id: Number(creditId), days: Number(val) } });
+        showToast('Кредит продлён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function closeAdminCredit(creditId) {
+      try {
+        await api('/api/admin/credit/close', { method: 'POST', body: { credit_id: Number(creditId) } });
+        showToast('Кредит закрыт');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function grantAdminLevel() {
+      try {
+        const username = els.adminGrantUsername.value.trim();
+        const level = Number(els.adminGrantLevel.value);
+        const res = await api('/api/admin/grant_level', { method: 'POST', body: { username, admin_level: level } });
+        showToast(res.message || 'Админ-уровень обновлён');
+        els.adminGrantForm.reset();
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function warnAdminUser(userId) {
+      const reason = prompt('Причина предупреждения:') || '';
+      try {
+        const res = await api('/api/admin/user/warn', { method: 'POST', body: { user_id: Number(userId), reason } });
+        showToast(res.message || 'Warn выдан');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function clearWarningsAdminUser(userId) {
+      try {
+        const res = await api('/api/admin/user/clear_warnings', { method: 'POST', body: { user_id: Number(userId) } });
+        showToast(res.message || 'Предупреждения сняты');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function banAdminUser(userId, permanent = false) {
+      let days = null;
+      if (!permanent) {
+        const daysInput = prompt('На сколько дней бан? (или "perm" / "навсегда" для уровня 6)');
+        if (daysInput === null) return;
+        const text = String(daysInput).trim().toLowerCase();
+        if (text === 'perm' || text === 'permanent' || text === 'forever' || text === 'навсегда') {
+          permanent = true;
+        } else {
+          days = Number(daysInput);
+          if (!Number.isFinite(days) || days <= 0) {
+            showToast('Введите корректное число дней', 'bad');
+            return;
+          }
+        }
+      }
+      const reason = prompt('Причина бана:') || '';
+      try {
+        const body = { user_id: Number(userId), reason };
+        if (permanent) body.permanent = true;
+        else body.days = Number(days);
+        const res = await api('/api/admin/user/ban', { method: 'POST', body });
+        showToast(res.message || 'Бан выдан');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function unbanAdminUser(userId) {
+      try {
+        const res = await api('/api/admin/user/unban', { method: 'POST', body: { user_id: Number(userId) } });
+        showToast(res.message || 'Разбан выполнен');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function deleteAdminUser(userId, username = '') {
+      const label = username || `id=${userId}`;
+      const sure = confirm(`Удалить пользователя ${label} из базы данных безвозвратно?`);
+      if (!sure) return;
+      try {
+        const res = await api('/api/admin/user/delete', { method: 'POST', body: { user_id: Number(userId) } });
+        showToast(res.message || 'Пользователь удалён');
+        loadAdmin();
+      } catch (e) {
+        showToast(e.message, 'bad');
+      }
+    }
+
+    async function openAdminSupport(userId) {
+      state.adminSupportSelectedUserId = Number(userId);
+      const res = await api(`/api/admin/support/messages/${state.adminSupportSelectedUserId}`);
+      state.adminSupportMessages = res.messages || [];
+      const target = res.target_user;
+      els.adminSupportTitle.textContent = target ? `Чат поддержки: ${target.username}` : 'Чат поддержки';
+      renderAdmin();
+    }
+
+    async function sendAdminSupportReply() {
+      if (!state.adminSupportSelectedUserId) {
+        throw new Error('Сначала выберите пользователя в списке диалогов');
+      }
+      const message = els.adminSupportReplyText.value.trim();
+      if (!message) return;
+      const res = await api('/api/admin/support/reply', {
+        method: 'POST',
+        body: { user_id: state.adminSupportSelectedUserId, message }
+      });
+      els.adminSupportReplyText.value = '';
+      showToast(res.message || 'Ответ отправлен');
+      await openAdminSupport(state.adminSupportSelectedUserId);
+    }
+
+    async function sendAdminChatMessage() {
+      const message = els.adminChatInput.value.trim();
+      if (!message) return;
+      const res = await api('/api/admin/chat/send', { method: 'POST', body: { message } });
+      els.adminChatInput.value = '';
+      showToast(res.message || 'Сообщение отправлено');
+      const chat = await api('/api/admin/chat/messages');
+      state.adminChatMessages = chat.messages || [];
+      renderAdmin();
+    }
+
+    async function refreshNgrokStatus() {
+      const res = await api('/api/admin/ngrok/status');
+      state.ngrokStatus = res.status || null;
+      renderAdmin();
+    }
+
+    async function startNgrok() {
+      state.ngrokStatus = {
+        ...(state.ngrokStatus || {}),
+        running: false,
+        public_url: null,
+        public_host: null,
+        public_ip: null,
+        error: 'Перезапуск туннеля...'
+      };
+      renderAdmin();
+      try {
+        await api('/api/admin/ngrok/stop', { method: 'POST' });
+      } catch (_) {}
+      const res = await api('/api/admin/ngrok/start', { method: 'POST' });
+      state.ngrokStatus = res.status || null;
+      renderAdmin();
+      showToast(res.message || 'Публичный туннель включён');
+    }
+
+    async function stopNgrok() {
+      const res = await api('/api/admin/ngrok/stop', { method: 'POST' });
+      state.ngrokStatus = res.status || null;
+      renderAdmin();
+      showToast(res.message || 'Публичный туннель выключен');
+    }
+
+    async function setAdminUsdRate() {
+      const value = Number(els.adminUsdRateInput.value);
+      if (!Number.isFinite(value) || value <= 0) throw new Error('Введите корректный курс USD');
+      const res = await api('/api/admin/economy/usd_rate', { method: 'POST', body: { usd_rate: value } });
+      showToast(res.message || 'Курс USD обновлён');
+      await loadAdmin();
+    }
+
+    async function convertCurrency() {
+      const direction = String(els.convertDirection.value || 'RUB_TO_USD');
+      const amount = Number(els.convertAmount.value);
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error('Введите корректную сумму');
+      const res = await api('/api/currency/convert', { method: 'POST', body: { direction, amount } });
+      state.user = res.user;
+      renderUser();
+      await loadCurrencyInfo();
+      showToast(res.message || 'Конвертация выполнена');
+    }
+
+    async function saveMessengerAvatar() {
+      const avatarUrl = String(els.messengerAvatarInput.value || '').trim();
+      const res = await api('/api/messenger/avatar', { method: 'POST', body: { avatar_url: avatarUrl } });
+      state.user = res.user;
+      renderUser();
+      showToast(res.message || 'Аватар обновлён');
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadMessengerAvatarFile() {
+      const file = els.messengerAvatarFile?.files?.[0];
+      if (!file) throw new Error('Сначала выбери файл');
+      if (!String(file.type || '').startsWith('image/')) throw new Error('Можно загружать только изображения');
+      if (Number(file.size || 0) > 1_500_000) throw new Error('Файл слишком большой (максимум 1.5 MB)');
+      const dataUrl = await readFileAsDataUrl(file);
+      const res = await api('/api/messenger/avatar', { method: 'POST', body: { avatar_data: dataUrl } });
+      state.user = res.user;
+      renderUser();
+      els.messengerAvatarFile.value = '';
+      showToast(res.message || 'Аватар загружен');
+    }
+
+    async function createMessengerChannel() {
+      const title = String(els.messengerChannelTitleInput.value || '').trim();
+      const slug = String(els.messengerChannelSlugInput.value || '').trim();
+      if (!title) throw new Error('Введите название канала');
+      const res = await api('/api/messenger/channels/create', { method: 'POST', body: { title, slug } });
+      showToast(res.message || 'Канал создан');
+      els.messengerChannelCreateForm.reset();
+      await loadMessengerChannels();
+      if (res.channel?.id) {
+        await openMessengerChannel(res.channel.id);
+      }
+    }
+
+    async function joinMessengerChannel(channelId) {
+      const id = Number(channelId || 0);
+      if (!id) throw new Error('Введите корректный ID канала');
+      const res = await api('/api/messenger/channels/join', { method: 'POST', body: { channel_id: id } });
+      showToast(res.message || 'Вы вступили в канал');
+      await loadMessengerChannels();
+      await openMessengerChannel(id);
+    }
+
+    async function startMessengerCall() {
+      const cur = state.messengerCurrent || {};
+      if (cur.type !== 'user' || !Number(cur.userId || 0)) {
+        throw new Error('Звонить можно только в личном диалоге');
+      }
+      if (state.call.active) {
+        throw new Error('Сначала завершите текущий звонок');
+      }
+      await ensureLocalCallMedia();
+      let res;
+      try {
+        res = await api('/api/messenger/call/start', { method: 'POST', body: { target_user_id: Number(cur.userId) } });
+      } catch (err) {
+        resetCallStateLocal();
+        throw err;
+      }
+      clearScreenShare();
+      state.call.active = true;
+      state.call.peerUserId = Number(cur.userId);
+      state.call.peerLabel = cur.sub || cur.title || `user_${Number(cur.userId)}`;
+      state.call.currentCallId = Number(res.call?.id || 0) || null;
+      state.call.micEnabled = (state.call.localStream?.getAudioTracks?.() || []).some((track) => track.enabled);
+      state.call.cameraEnabled = (state.call.localStream?.getVideoTracks?.() || []).some((track) => track.enabled);
+      renderCallControls();
+      showToast(res.message || 'Вызов отправлен');
+      await loadMessengerCalls();
+    }
+
+    async function sendPublicChatMessage() {
+      const message = els.publicChatInput.value.trim();
+      if (!message) return;
+      const cur = state.messengerCurrent || { type: 'none' };
+      let res;
+      if (cur.type === 'user' && Number(cur.userId || 0) > 0) {
+        res = await api('/api/messenger/dialog/send', {
+          method: 'POST',
+          body: { to_user_id: Number(cur.userId), message }
+        });
+        await openMessengerUserDialog(Number(cur.userId));
+        await loadMessengerDialogs();
+      } else if (cur.type === 'channel' && Number(cur.channelId || 0) > 0) {
+        res = await api(`/api/messenger/channels/${Number(cur.channelId)}/send`, {
+          method: 'POST',
+          body: { message }
+        });
+        await openMessengerChannel(Number(cur.channelId));
+        await loadMessengerChannels();
+      } else {
+        throw new Error('Общий чат отключен. Выбери личный диалог или канал.');
+      }
+      els.publicChatInput.value = '';
+      showToast(res.message || 'Сообщение отправлено');
+    }
+
+    async function readAllNotifications() {
+      const res = await api('/api/notifications/read', { method: 'POST', body: { all: true } });
+      state.notificationsUnread = Number(res.unread_count || 0);
+      renderNotificationsBadge();
+      await loadNotifications(true);
+    }
+
+    function bindEvents() {
+      bindPasswordToggles();
+      els.showLoginBtn.addEventListener('click', () => switchAuth('login'));
+      els.showRegisterBtn.addEventListener('click', () => switchAuth('register'));
+
+      if (els.messengerModeInternalBtn) {
+        els.messengerModeInternalBtn.addEventListener('click', () => setMessengerMode('internal'));
+      }
+      if (els.messengerModeTelegramBtn) {
+        els.messengerModeTelegramBtn.addEventListener('click', () => setMessengerMode('internal'));
+      }
+      if (els.messengerSideTabProfileBtn) {
+        els.messengerSideTabProfileBtn.addEventListener('click', () => setMessengerSidebarTab('profile'));
+      }
+      if (els.messengerSideTabChatsBtn) {
+        els.messengerSideTabChatsBtn.addEventListener('click', () => setMessengerSidebarTab('chats'));
+      }
+      if (els.messengerCreateBtn) {
+        els.messengerCreateBtn.addEventListener('click', () => {
+          setMessengerSidebarTab('create');
+          if (els.messengerChannelTitleInput) {
+            els.messengerChannelTitleInput.focus();
+          }
+        });
+      }
+
+      els.messengerAvatarForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await saveMessengerAvatar();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerAvatarUploadBtn.addEventListener('click', async () => {
+        try {
+          await uploadMessengerAvatarFile();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerSearchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await searchMessengerUsers(els.messengerSearchInput.value);
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerSearchResults.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const actionTarget = target.closest('[data-action="open-user"]');
+        if (!(actionTarget instanceof HTMLElement)) return;
+        const userId = Number(actionTarget.dataset.userId || 0);
+        if (!userId) return;
+        try {
+          await openMessengerUserDialog(userId);
+          setMessengerMode('internal');
+          renderMessengerDialogsList();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerDialogsList.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const actionTarget = target.closest('[data-action="open-user"]');
+        if (!(actionTarget instanceof HTMLElement)) return;
+        const userId = Number(actionTarget.dataset.userId || 0);
+        if (!userId) return;
+        try {
+          await openMessengerUserDialog(userId);
+          setMessengerMode('internal');
+          renderMessengerDialogsList();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerChannelsList.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const actionTarget = target.closest('[data-action]');
+        if (!(actionTarget instanceof HTMLElement)) return;
+        const action = actionTarget.dataset.action || '';
+        try {
+          if (action === 'open-channel') {
+            const channelId = Number(actionTarget.dataset.channelId || 0);
+            if (!channelId) return;
+            await openMessengerChannel(channelId);
+            setMessengerMode('internal');
+            renderMessengerChannelsList();
+          }
+          if (action === 'join-channel') {
+            const channelId = Number(actionTarget.dataset.channelId || 0);
+            if (!channelId) return;
+            await joinMessengerChannel(channelId);
+            setMessengerMode('internal');
+          }
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerChannelCreateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await createMessengerChannel();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerChannelJoinForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await joinMessengerChannel(Number(els.messengerChannelJoinInput.value));
+          els.messengerChannelJoinForm.reset();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerChannelsRefreshBtn.addEventListener('click', async () => {
+        try {
+          await loadMessengerChannels();
+          showToast('Список каналов обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.messengerCallBtn.addEventListener('click', async () => {
+        try {
+          await startMessengerCall();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callMicBtn.addEventListener('click', async () => {
+        try {
+          await toggleCallMic();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callCameraBtn.addEventListener('click', async () => {
+        try {
+          await toggleCallCamera();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callScreenBtn.addEventListener('click', async () => {
+        try {
+          await toggleCallScreenShare();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callEndBtn.addEventListener('click', async () => {
+        try {
+          await endMessengerCall();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callRefreshDevicesBtn.addEventListener('click', async () => {
+        try {
+          await refreshCallOutputDevices();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.callOutputSelect.addEventListener('change', async () => {
+        try {
+          await setCallOutputDevice(els.callOutputSelect.value, false);
+          showToast('Устройство вывода обновлено');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === 'function') {
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+          refreshCallOutputDevices(true).catch(() => {});
+        });
+      }
+
+      els.loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await api('/api/login', {
+            method: 'POST',
+            body: {
+              username: document.getElementById('loginUsername').value.trim(),
+              password: document.getElementById('loginPassword').value
+            }
+          });
+          state.user = res.user;
+          showApp();
+          renderUser();
+          await loadVipPrices();
+          await loadSupportWidgetMessages(false);
+          await loadNotifications(false);
+          await loadMessengerWorkspace(false);
+          showToast('Вход выполнен');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const password = document.getElementById('registerPassword').value;
+          const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+          if (password !== passwordConfirm) throw new Error('Пароли не совпадают');
+          const res = await api('/api/register', {
+            method: 'POST',
+            body: {
+              username: document.getElementById('registerUsername').value.trim(),
+              full_name: document.getElementById('registerFullName').value.trim(),
+              password: password,
+              password_confirm: passwordConfirm,
+              ref_code: document.getElementById('registerRef').value.trim()
+            }
+          });
+          state.user = res.user;
+          showApp();
+          renderUser();
+          await loadVipPrices();
+          await loadSupportWidgetMessages(false);
+          await loadNotifications(false);
+          await loadMessengerWorkspace(false);
+          showToast('Аккаунт создан');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+          await endMessengerCall({ sendRequest: true, silent: true, reloadLog: false });
+        } catch (_) {
+          resetCallStateLocal();
+        }
+        try {
+          await api('/api/logout', { method: 'POST' });
+        } catch (_) {}
+        state.user = null;
+        state.isAdmin = false;
+        state.canAdmin = false;
+        state.adminLevel = 0;
+        state.adminPasswordSet = false;
+        state.adminEconomy = null;
+        state.currencyInfo = null;
+        state.topBalanceData = null;
+        state.topBalanceCurrency = 'RUB';
+        state.ngrokStatus = null;
+        state.notifications = [];
+        state.notificationsUnread = 0;
+        state.publicChatMessages = [];
+        state.publicChatUnread = 0;
+        state.messengerSearchResults = [];
+        state.messengerDialogs = [];
+        state.messengerJoinedChannels = [];
+        state.messengerDiscoverChannels = [];
+        state.messengerMessages = [];
+        state.messengerCalls = [];
+        state.messengerSidebarTab = 'profile';
+        state.messengerCurrent = { type: 'none', userId: null, channelId: null, title: 'Выбери чат', sub: 'Общий чат отключен', avatarUrl: '' };
+        resetCallStateLocal();
+        els.notifyPanel.classList.add('hidden');
+        els.supportWidget.classList.add('hidden');
+        els.supportToggleBtn.classList.add('hidden');
+        els.supportUnreadBadge.classList.add('hidden');
+        renderNotificationsBadge();
+        renderMessengerTabTitle();
+        showAuth();
+      });
+
+      els.notifyToggleBtn.addEventListener('click', async () => {
+        const hidden = els.notifyPanel.classList.contains('hidden');
+        if (hidden) {
+          els.notifyPanel.classList.remove('hidden');
+          await loadNotifications(true);
+        } else {
+          els.notifyPanel.classList.add('hidden');
+        }
+      });
+      els.notifyCloseBtn.addEventListener('click', () => {
+        els.notifyPanel.classList.add('hidden');
+      });
+      els.notifyReadAllBtn.addEventListener('click', async () => {
+        try {
+          await readAllNotifications();
+          showToast('Уведомления прочитаны');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.changePasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const currentPassword = document.getElementById('currentPassword').value;
+          const newPassword = document.getElementById('newPassword').value;
+          const newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
+          if (newPassword !== newPasswordConfirm) throw new Error('Новый пароль и подтверждение не совпадают');
+          const res = await api('/api/change_password', {
+            method: 'POST',
+            body: {
+              current_password: currentPassword,
+              new_password: newPassword,
+              confirm_password: newPasswordConfirm
+            }
+          });
+          showToast(res.message || 'Пароль обновлён');
+          e.target.reset();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.updateProfileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const fullName = document.getElementById('profileFullNameInput').value.trim();
+          const res = await api('/api/profile/update', { method: 'POST', body: { full_name: fullName } });
+          state.user = res.user;
+          renderUser();
+          showToast(res.message || 'Профиль обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.deleteAccountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const currentPassword = els.deleteAccountPassword.value.trim();
+          if (!currentPassword) throw new Error('Введите текущий пароль');
+          const sure = confirm('Удалить аккаунт безвозвратно? Это действие нельзя отменить.');
+          if (!sure) return;
+          await endMessengerCall({ sendRequest: true, silent: true, reloadLog: false });
+          const res = await api('/api/account/delete', {
+            method: 'POST',
+            body: { current_password: currentPassword }
+          });
+          showToast(res.message || 'Аккаунт удалён');
+          state.user = null;
+          state.isAdmin = false;
+          state.canAdmin = false;
+          state.adminLevel = 0;
+          state.adminPasswordSet = false;
+          state.adminEconomy = null;
+          state.currencyInfo = null;
+          state.topBalanceData = null;
+          state.topBalanceCurrency = 'RUB';
+          state.ngrokStatus = null;
+          state.notifications = [];
+          state.notificationsUnread = 0;
+          state.publicChatMessages = [];
+          state.publicChatUnread = 0;
+          state.messengerSearchResults = [];
+          state.messengerDialogs = [];
+          state.messengerJoinedChannels = [];
+          state.messengerDiscoverChannels = [];
+          state.messengerMessages = [];
+          state.messengerCalls = [];
+          state.messengerSidebarTab = 'profile';
+          state.messengerCurrent = { type: 'none', userId: null, channelId: null, title: 'Выбери чат', sub: 'Общий чат отключен', avatarUrl: '' };
+          resetCallStateLocal();
+          els.notifyPanel.classList.add('hidden');
+          renderNotificationsBadge();
+          renderMessengerTabTitle();
+          showAuth();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.publicChatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await sendPublicChatMessage();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.tabs.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+
+      document.getElementById('clickBtn').addEventListener('click', async () => {
+        try {
+          const res = await api('/api/click', { method: 'POST' });
+          state.user = res.user;
+          renderUser();
+          showToast(res.message);
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      document.getElementById('dailyBtn').addEventListener('click', async () => {
+        try {
+          const res = await api('/api/daily', { method: 'POST' });
+          state.user = res.user;
+          renderUser();
+          showToast(res.message);
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      els.transferCurrency.addEventListener('change', () => {
+        const isUsd = String(els.transferCurrency.value || 'RUB').toUpperCase() === 'USD';
+        els.transferAmount.step = isUsd ? '0.01' : '1';
+        els.transferAmount.min = isUsd ? '0.01' : '1';
+        els.transferAmount.placeholder = isUsd ? 'Сумма USD' : 'Сумма RUB';
+      });
+      els.transferCurrency.dispatchEvent(new Event('change'));
+
+      document.getElementById('transferForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const currency = String(els.transferCurrency.value || 'RUB').toUpperCase();
+          const res = await api('/api/transfer', {
+            method: 'POST',
+            body: {
+              to_username: document.getElementById('transferTo').value.trim(),
+              amount: Number(document.getElementById('transferAmount').value),
+              currency
+            }
+          });
+          state.user = res.user;
+          renderUser();
+          await loadCurrencyInfo();
+          showToast(res.message);
+          e.target.reset();
+          els.transferCurrency.value = 'RUB';
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.currencyRefreshBtn.addEventListener('click', async () => {
+        try {
+          await loadCurrencyInfo();
+          showToast('Курс обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.topBalanceCurrency.addEventListener('change', async () => {
+        try {
+          await loadTopBalances();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+      els.topBalanceRefreshBtn.addEventListener('click', async () => {
+        try {
+          await loadTopBalances();
+          showToast('Топ обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.convertForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await convertCurrency();
+          els.convertForm.reset();
+          els.convertDirection.dispatchEvent(new Event('change'));
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+      els.convertDirection.addEventListener('change', () => {
+        const dir = String(els.convertDirection.value || 'RUB_TO_USD');
+        if (dir === 'RUB_TO_USD') {
+          els.convertAmount.step = '1';
+          els.convertAmount.min = '1';
+          els.convertAmount.placeholder = 'Сумма RUB';
+        } else {
+          els.convertAmount.step = '0.01';
+          els.convertAmount.min = '0.01';
+          els.convertAmount.placeholder = 'Сумма USD';
+        }
+      });
+      els.convertDirection.dispatchEvent(new Event('change'));
+
+      document.getElementById('vipUpgradeBtn').addEventListener('click', async () => {
+        try {
+          const res = await api('/api/vip/upgrade', { method: 'POST' });
+          state.user = res.user;
+          renderUser();
+          showToast(res.message);
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      document.getElementById('playBtn').addEventListener('click', async () => {
+        try {
+          const res = await api('/api/game5050', { method: 'POST', body: { bet: Number(document.getElementById('gameBet').value) } });
+          state.user = res.user;
+          renderUser();
+          els.gameResult.textContent = res.message;
+          els.gameResult.className = `game-result ${res.won ? 'win' : 'lose'}`;
+          showToast(res.message, res.won ? 'good' : 'bad');
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      document.getElementById('statsRefreshBtn').addEventListener('click', loadStats);
+
+      document.getElementById('copyRefBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(els.refCodeInput.value || '');
+          showToast('Рефкод скопирован');
+        } catch (_) {
+          showToast('Не удалось скопировать', 'bad');
+        }
+      });
+
+      document.getElementById('creditTakeBtn').addEventListener('click', async () => {
+        try {
+          const amount = Number(document.getElementById('creditTakeAmount').value);
+          const res = await api('/api/credit/take', { method: 'POST', body: { amount } });
+          state.user = res.user;
+          renderUser();
+          loadCredits();
+          showToast(res.message);
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      document.getElementById('creditRepayBtn').addEventListener('click', async () => {
+        try {
+          const res = await api('/api/credit/repay', { method: 'POST' });
+          state.user = res.user;
+          renderUser();
+          loadCredits();
+          showToast(res.message);
+        } catch (e) {
+          showToast(e.message, 'bad');
+        }
+      });
+
+      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          if (!state.canAdmin) throw new Error('Админ-доступ только для пользователей с уровнем админки');
+          const password = els.adminPassword.value.trim();
+          const confirmPassword = els.adminPasswordConfirm.value.trim();
+          const body = state.adminPasswordSet
+            ? { password }
+            : { new_password: password, confirm_password: confirmPassword };
+          if (!state.adminPasswordSet && password !== confirmPassword) {
+            throw new Error('Пароль админки и подтверждение не совпадают');
+          }
+          const login = await api('/api/admin/login', { method: 'POST', body });
+          state.isAdmin = true;
+          state.adminLevel = Number(login.admin_level || 0);
+          state.adminPasswordSet = true;
+          state.adminSupportSelectedUserId = null;
+          els.adminPassword.value = '';
+          els.adminPasswordConfirm.value = '';
+          resetPasswordFieldVisibility('adminPassword');
+          resetPasswordFieldVisibility('adminPasswordConfirm');
+          renderAdminVisibility();
+          showToast('Админ-доступ открыт');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      document.getElementById('adminRefreshBtn').addEventListener('click', loadAdmin);
+
+      document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
+        try {
+          await api('/api/admin/logout', { method: 'POST' });
+        } catch (_) {}
+        state.isAdmin = false;
+        state.adminSupportSelectedUserId = null;
+        state.adminEconomy = null;
+        state.ngrokStatus = null;
+        renderAdminVisibility();
+        showToast('Админ-доступ закрыт');
+      });
+
+      els.adminSubtabButtons.forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          setAdminSubtab(btn.dataset.adminTab);
+          if (!state.isAdmin) return;
+          try {
+            await loadAdmin();
+          } catch (_) {}
+        });
+      });
+
+      els.adminNgrokRefreshBtn.addEventListener('click', async () => {
+        try {
+          await refreshNgrokStatus();
+          showToast('Статус туннеля обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+      els.adminNgrokStartBtn.addEventListener('click', async () => {
+        try {
+          await startNgrok();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+      els.adminNgrokStopBtn.addEventListener('click', async () => {
+        try {
+          await stopNgrok();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.adminUsdRateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await setAdminUsdRate();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.adminGrantForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await grantAdminLevel();
+      });
+
+      els.adminUsersBody.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.dataset.id;
+        if (!id) return;
+        if (target.classList.contains('admin-set-balance')) setAdminBalance(id);
+        if (target.classList.contains('admin-set-vip')) setAdminVip(id);
+        if (target.classList.contains('admin-set-level')) setAdminLevel(id);
+        if (target.classList.contains('admin-reset-pass')) resetAdminPassword(id);
+        if (target.classList.contains('admin-set-susp')) setAdminSuspicious(id, target.dataset.val || '0');
+        if (target.classList.contains('admin-delete-user')) deleteAdminUser(id, target.dataset.username || '');
+      });
+
+      els.adminCreditsBody.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.dataset.id;
+        if (!id) return;
+        if (target.classList.contains('admin-credit-extend')) extendAdminCredit(id);
+        if (target.classList.contains('admin-credit-close')) closeAdminCredit(id);
+      });
+
+      els.adminModerationBody.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.dataset.id;
+        if (!id) return;
+        if (target.classList.contains('admin-warn-user')) warnAdminUser(id);
+        if (target.classList.contains('admin-clear-warns-user')) clearWarningsAdminUser(id);
+        if (target.classList.contains('admin-ban-user')) banAdminUser(id);
+        if (target.classList.contains('admin-perma-ban-user')) banAdminUser(id, true);
+        if (target.classList.contains('admin-unban-user')) unbanAdminUser(id);
+      });
+
+      els.adminSupportUsersBody.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.dataset.id;
+        if (!id || !target.classList.contains('admin-open-support')) return;
+        openAdminSupport(id).catch((err) => showToast(err.message, 'bad'));
+      });
+
+      els.adminSupportReplyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await sendAdminSupportReply();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.adminChatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await sendAdminChatMessage();
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+
+      els.supportToggleBtn.addEventListener('click', async () => {
+        const hidden = els.supportWidget.classList.contains('hidden');
+        if (hidden) {
+          els.supportWidget.classList.remove('hidden');
+          await loadSupportWidgetMessages(true);
+        } else {
+          els.supportWidget.classList.add('hidden');
+        }
+      });
+
+      els.supportCloseBtn.addEventListener('click', () => {
+        els.supportWidget.classList.add('hidden');
+      });
+
+      els.supportForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = els.supportInput.value.trim();
+        if (!message) return;
+        try {
+          const res = await api('/api/support/send', { method: 'POST', body: { message } });
+          els.supportInput.value = '';
+          showToast(res.message || 'Сообщение отправлено');
+          await loadSupportWidgetMessages(true);
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+    }
+
+    async function bootstrap() {
+      bindEvents();
+      switchAuth('login');
+      setAdminSubtab('dashboard');
+      setMessengerMode('internal');
+      renderMessengerPanels();
+      refreshCallOutputDevices(true).catch(() => {});
+
+      try {
+        await loadMe();
+        await loadVipPrices();
+      } catch (_) {
+        showAuth();
+      }
+
+      setInterval(async () => {
+        if (!state.user) return;
+        try {
+          await loadMe();
+        } catch (_) {}
+      }, 15000);
+
+      setInterval(async () => {
+        if (!state.user) return;
+        try {
+          const markRead = !els.supportWidget.classList.contains('hidden');
+          await loadSupportWidgetMessages(markRead);
+        } catch (_) {}
+      }, 10000);
+
+      setInterval(async () => {
+        if (!state.user) return;
+        try {
+          const markRead = !els.notifyPanel.classList.contains('hidden');
+          await loadNotifications(markRead);
+        } catch (_) {}
+      }, 10000);
+
+      setInterval(async () => {
+        if (!state.user) return;
+        try {
+          const messengerActive = document.getElementById('tab-messenger').classList.contains('active');
+          if (messengerActive) {
+            const cur = state.messengerCurrent || {};
+            if (cur.type === 'user' && Number(cur.userId || 0) > 0) {
+              await openMessengerUserDialog(cur.userId, true);
+            } else if (cur.type === 'channel' && Number(cur.channelId || 0) > 0) {
+              await openMessengerChannel(cur.channelId, true);
+            }
+            await Promise.all([loadMessengerDialogs(), loadMessengerChannels(), loadMessengerCalls()]);
+          }
+        } catch (_) {}
+      }, 9000);
+
+      setInterval(async () => {
+        if (!state.user || !state.isAdmin) return;
+        try {
+          await loadAdmin();
+        } catch (_) {}
+      }, 12000);
+
+      setInterval(() => {
+        if (state.user && Number(state.user.daily_remaining || 0) > 0) {
+          state.user.daily_remaining -= 1;
+          updateDailyTimerText();
+        }
+      }, 1000);
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

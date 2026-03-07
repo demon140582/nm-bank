@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: nm-bank
+    runtime: python
+    plan: starter
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 8 --bind 0.0.0.0:$PORT server:app
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: NM_BANK_SECRET
+        generateValue: true
+      - key: NM_BANK_DB_PATH
+        value: /var/data/bank.db
+    disk:
+      name: nm-bank-data
+      mountPath: /var/data
+      sizeGB: 1

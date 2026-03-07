@@ -33,6 +33,21 @@ After success:
 sudo bash /opt/nm-bank/deploy/oracle/update_nm_bank.sh
 ```
 
+## 3.1) Full auto-deploy from GitHub (optional)
+
+Workflow file is already added:
+
+- `.github/workflows/deploy-oracle.yml`
+
+Set repository secrets in GitHub (`Settings -> Secrets and variables -> Actions`):
+
+- `ORACLE_HOST` - VM public IP
+- `ORACLE_USER` - usually `ubuntu`
+- `ORACLE_SSH_KEY` - private SSH key content (full text)
+- `ORACLE_PORT` - optional, default `22`
+
+After that every push to `main` auto deploys to VM.
+
 ## 4) Useful service commands
 
 ```bash

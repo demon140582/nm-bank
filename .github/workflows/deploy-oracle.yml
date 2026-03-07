@@ -1,0 +1,59 @@
+name: Deploy NM-Bank to Oracle VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.ORACLE_HOST != '' && secrets.ORACLE_USER != '' && secrets.ORACLE_SSH_KEY != '' }}
+    env:
+      ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+      ORACLE_USER: ${{ secrets.ORACLE_USER }}
+      ORACLE_PORT: ${{ secrets.ORACLE_PORT }}
+      ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+    steps:
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf "%s\n" "$ORACLE_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          PORT="${ORACLE_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$ORACLE_HOST" >> ~/.ssh/known_hosts
+
+      - name: Install or update NM-Bank
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="${ORACLE_PORT:-22}"
+          ssh -p "$PORT" "$ORACLE_USER@$ORACLE_HOST" 'bash -s' <<'EOS'
+          set -euo pipefail
+          if [ ! -f /opt/nm-bank/deploy/oracle/update_nm_bank.sh ]; then
+            curl -fsSL https://raw.githubusercontent.com/demon140582/nm-bank/main/deploy/oracle/install_free_24_7.sh -o /tmp/install_nm_bank.sh
+            chmod +x /tmp/install_nm_bank.sh
+            sudo bash /tmp/install_nm_bank.sh https://github.com/demon140582/nm-bank.git
+          else
+            sudo bash /opt/nm-bank/deploy/oracle/update_nm_bank.sh
+          fi
+          sudo systemctl is-active nm-bank.service
+          EOS
+
+  missing-secrets:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.ORACLE_HOST == '' || secrets.ORACLE_USER == '' || secrets.ORACLE_SSH_KEY == '' }}
+    steps:
+      - name: Fail with setup hint
+        shell: bash
+        run: |
+          echo "Missing required GitHub secrets:"
+          echo "- ORACLE_HOST"
+          echo "- ORACLE_USER"
+          echo "- ORACLE_SSH_KEY"
+          echo "Optional: ORACLE_PORT (default 22)"
+          exit 1

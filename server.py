@@ -56,6 +56,8 @@ ANTI_ABUSE_STATE: Dict[int, Dict[str, float]] = {}
 NGROK_PORT = int(os.environ.get("NM_BANK_TUNNEL_PORT", "5000"))
 CLOUDFLARE_HOST_HINT = "trycloudflare.com"
 LOCALHOST_RUN_HOST = "localhost.run"
+PINGGY_HOST_HINT = "pinggy.link"
+PINGGY_HOST = "a.pinggy.io"
 NGROK_LOCK = threading.RLock()
 NGROK_LOG_LOCK = threading.RLock()
 NGROK_PROCESS: Optional[subprocess.Popen] = None
@@ -63,6 +65,7 @@ NGROK_PUBLIC_URL: Optional[str] = None
 NGROK_LAST_ERROR: Optional[str] = None
 NGROK_STARTED_AT: Optional[str] = None
 NGROK_PROVIDER: str = "cloudflare_quick_tunnel"
+NGROK_PREFERRED_PROVIDER: str = str(os.environ.get("NM_BANK_TUNNEL_PROVIDER", "auto") or "auto").strip().lower()
 NGROK_LOG_LINES: List[str] = []
 NGROK_READER_THREAD: Optional[threading.Thread] = None
 
@@ -419,6 +422,53 @@ def init_db() -> None:
 init_db()
 
 
+def normalize_tunnel_provider(value: Optional[str]) -> str:
+    raw = str(value or "auto").strip().lower()
+    aliases = {
+        "auto": "auto",
+        "cloudflare": "cloudflare_quick_tunnel",
+        "cloudflare_quick_tunnel": "cloudflare_quick_tunnel",
+        "cf": "cloudflare_quick_tunnel",
+        "pinggy": "pinggy",
+        "localhost": "localhost_run",
+        "localhost.run": "localhost_run",
+        "localhost_run": "localhost_run",
+    }
+    return aliases.get(raw, "auto")
+
+
+def tunnel_provider_candidates(preferred: str) -> List[str]:
+    normalized = normalize_tunnel_provider(preferred)
+    if normalized == "auto":
+        return ["cloudflare_quick_tunnel", "pinggy", "localhost_run"]
+    return [normalized]
+
+
+def tunnel_provider_options(cloudflared_exe: Optional[str], ssh_exe: Optional[str]) -> List[Dict[str, Any]]:
+    return [
+        {
+            "key": "auto",
+            "label": "Авто (Cloudflare -> Pinggy -> localhost.run)",
+            "available": bool(cloudflared_exe or ssh_exe),
+        },
+        {
+            "key": "cloudflare_quick_tunnel",
+            "label": "Cloudflare Quick Tunnel",
+            "available": bool(cloudflared_exe),
+        },
+        {
+            "key": "pinggy",
+            "label": "Pinggy SSH Tunnel",
+            "available": bool(ssh_exe),
+        },
+        {
+            "key": "localhost_run",
+            "label": "localhost.run SSH Tunnel",
+            "available": bool(ssh_exe),
+        },
+    ]
+
+
 def find_ngrok_executable() -> Optional[str]:
     env_path = os.environ.get("CLOUDFLARED_PATH", "").strip() or os.environ.get("CF_PATH", "").strip()
     if env_path and os.path.isfile(env_path):
@@ -524,8 +574,8 @@ def _extract_public_url_from_line(line: str) -> Optional[str]:
     clean_line = re.sub(r"\x1b\[[0-9;]*m", "", str(line or ""))
     lowered = clean_line.lower()
 
-    # localhost.run often prints "xxxxx.lhr.life tunneled with ..." without scheme.
-    host_hint_match = re.search(r"\b([a-z0-9.-]+\.(?:localhost\.run|lhr\.life))\b", lowered)
+    # Some SSH tunnel providers print host without scheme.
+    host_hint_match = re.search(r"\b([a-z0-9.-]+\.(?:localhost\.run|lhr\.life|pinggy\.link))\b", lowered)
     if host_hint_match and "tunneled" in lowered:
         return f"https://{host_hint_match.group(1)}"
 
@@ -549,6 +599,8 @@ def _extract_public_url_from_line(line: str) -> Optional[str]:
             score += 120
         if host.endswith(".localhost.run") or host.endswith(".lhr.life"):
             score += 100
+        if host.endswith(".pinggy.link"):
+            score += 105
         if "tunneled" in lowered:
             score += 20
         if host.startswith("admin.localhost.run"):
@@ -581,6 +633,8 @@ def _url_quality(url: Optional[str]) -> int:
         score += 120
     if host.endswith(".localhost.run") or host.endswith(".lhr.life"):
         score += 100
+    if host.endswith(".pinggy.link"):
+        score += 105
     if host in {"localhost.run", "admin.localhost.run"}:
         score -= 120
     if "/docs" in path:
@@ -655,10 +709,25 @@ def _tunnel_log_tail(lines: int = 5) -> str:
 
 
 def get_ngrok_status() -> Dict[str, Any]:
-    global NGROK_PROCESS, NGROK_PUBLIC_URL, NGROK_LAST_ERROR, NGROK_STARTED_AT, NGROK_PROVIDER
+    global NGROK_PROCESS, NGROK_PUBLIC_URL, NGROK_LAST_ERROR, NGROK_STARTED_AT, NGROK_PROVIDER, NGROK_PREFERRED_PROVIDER
     with NGROK_LOCK:
         cloudflared_exe = find_ngrok_executable()
         ssh_exe = _find_ssh_executable()
+        preferred_provider = normalize_tunnel_provider(NGROK_PREFERRED_PROVIDER)
+        provider_options = tunnel_provider_options(cloudflared_exe, ssh_exe)
+        provider_available = {
+            "cloudflare_quick_tunnel": bool(cloudflared_exe),
+            "pinggy": bool(ssh_exe),
+            "localhost_run": bool(ssh_exe),
+        }
+        selected_available = bool(cloudflared_exe or ssh_exe) if preferred_provider == "auto" else bool(provider_available.get(preferred_provider))
+        if preferred_provider == "cloudflare_quick_tunnel":
+            selected_executable = cloudflared_exe
+        elif preferred_provider in {"pinggy", "localhost_run"}:
+            selected_executable = ssh_exe
+        else:
+            selected_executable = cloudflared_exe or ssh_exe
+
         running = False
         pid = None
         if NGROK_PROCESS is not None:
@@ -697,8 +766,10 @@ def get_ngrok_status() -> Dict[str, Any]:
 
         return {
             "provider": NGROK_PROVIDER,
-            "available": bool(cloudflared_exe or ssh_exe),
-            "executable": cloudflared_exe if NGROK_PROVIDER == "cloudflare_quick_tunnel" else ssh_exe,
+            "preferred_provider": preferred_provider,
+            "provider_options": provider_options,
+            "available": selected_available,
+            "executable": selected_executable,
             "cloudflared_available": bool(cloudflared_exe),
             "ssh_available": bool(ssh_exe),
             "running": running,
@@ -712,7 +783,7 @@ def get_ngrok_status() -> Dict[str, Any]:
 
 
 def start_ngrok_tunnel() -> Dict[str, Any]:
-    global NGROK_PROCESS, NGROK_PUBLIC_URL, NGROK_LAST_ERROR, NGROK_STARTED_AT, NGROK_READER_THREAD, NGROK_PROVIDER
+    global NGROK_PROCESS, NGROK_PUBLIC_URL, NGROK_LAST_ERROR, NGROK_STARTED_AT, NGROK_READER_THREAD, NGROK_PROVIDER, NGROK_PREFERRED_PROVIDER
     with NGROK_LOCK:
         cloudflared_exe = find_ngrok_executable()
         if not cloudflared_exe:
@@ -723,34 +794,70 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
 
         ssh_exe = _find_ssh_executable()
         cmd: Optional[List[str]] = None
-        if cloudflared_exe:
-            NGROK_PROVIDER = "cloudflare_quick_tunnel"
-            cmd = [
-                cloudflared_exe,
-                "tunnel",
-                "--url",
-                f"http://127.0.0.1:{NGROK_PORT}",
-                "--no-autoupdate",
-            ]
-        elif ssh_exe:
-            NGROK_PROVIDER = "localhost_run"
-            cmd = [
-                ssh_exe,
-                "-tt",
-                "-o",
-                "StrictHostKeyChecking=no",
-                "-o",
-                "ExitOnForwardFailure=yes",
-                "-o",
-                "ServerAliveInterval=30",
-                "-o",
-                "ServerAliveCountMax=3",
-                "-R",
-                f"80:127.0.0.1:{NGROK_PORT}",
-                f"nokey@{LOCALHOST_RUN_HOST}",
-            ]
-        else:
-            NGROK_LAST_ERROR = "Не удалось подготовить туннель: нет cloudflared и ssh-клиента."
+        selected = normalize_tunnel_provider(NGROK_PREFERRED_PROVIDER)
+        for candidate in tunnel_provider_candidates(selected):
+            if candidate == "cloudflare_quick_tunnel" and cloudflared_exe:
+                NGROK_PROVIDER = "cloudflare_quick_tunnel"
+                cmd = [
+                    cloudflared_exe,
+                    "tunnel",
+                    "--url",
+                    f"http://127.0.0.1:{NGROK_PORT}",
+                    "--no-autoupdate",
+                ]
+                break
+            if candidate == "pinggy" and ssh_exe:
+                NGROK_PROVIDER = "pinggy"
+                cmd = [
+                    ssh_exe,
+                    "-T",
+                    "-p",
+                    "443",
+                    "-o",
+                    "StrictHostKeyChecking=no",
+                    "-o",
+                    "LogLevel=ERROR",
+                    "-o",
+                    "ExitOnForwardFailure=yes",
+                    "-o",
+                    "ServerAliveInterval=30",
+                    "-o",
+                    "ServerAliveCountMax=3",
+                    "-R",
+                    f"0:127.0.0.1:{NGROK_PORT}",
+                    f"qr@{PINGGY_HOST}",
+                ]
+                break
+            if candidate == "localhost_run" and ssh_exe:
+                NGROK_PROVIDER = "localhost_run"
+                cmd = [
+                    ssh_exe,
+                    "-T",
+                    "-o",
+                    "StrictHostKeyChecking=no",
+                    "-o",
+                    "LogLevel=ERROR",
+                    "-o",
+                    "ExitOnForwardFailure=yes",
+                    "-o",
+                    "ServerAliveInterval=30",
+                    "-o",
+                    "ServerAliveCountMax=3",
+                    "-R",
+                    f"80:127.0.0.1:{NGROK_PORT}",
+                    f"nokey@{LOCALHOST_RUN_HOST}",
+                ]
+                break
+
+        if not cmd:
+            if selected == "cloudflare_quick_tunnel":
+                NGROK_LAST_ERROR = "Выбран Cloudflare, но cloudflared не найден."
+            elif selected == "pinggy":
+                NGROK_LAST_ERROR = "Выбран Pinggy, но ssh-клиент не найден."
+            elif selected == "localhost_run":
+                NGROK_LAST_ERROR = "Выбран localhost.run, но ssh-клиент не найден."
+            else:
+                NGROK_LAST_ERROR = "Не удалось подготовить туннель: нет cloudflared и ssh-клиента."
             return get_ngrok_status()
 
         NGROK_PUBLIC_URL = None
@@ -3883,6 +3990,31 @@ def api_admin_ngrok_status():
     return jsonify({"ok": True, "status": status})
 
 
+@app.post("/api/admin/ngrok/provider")
+@app.post("/api/admin/cloudflare/provider")
+@require_admin
+def api_admin_ngrok_set_provider():
+    global NGROK_PREFERRED_PROVIDER
+    denied = admin_level_guard(7)
+    if denied:
+        return denied
+    payload = request.get_json(silent=True) or {}
+    provider = normalize_tunnel_provider(payload.get("provider"))
+    with NGROK_LOCK:
+        NGROK_PREFERRED_PROVIDER = provider
+    status = get_ngrok_status()
+    log_action(session.get("user_id"), "admin_tunnel_provider_set", {"provider": provider})
+    return jsonify(
+        {
+            "ok": True,
+            "message": "Провайдер туннеля обновлен",
+            "preferred_provider": provider,
+            "provider_options": status.get("provider_options", []),
+            "status": status,
+        }
+    )
+
+
 @app.post("/api/admin/ngrok/start")
 @app.post("/api/admin/serveo/start")
 @app.post("/api/admin/cloudflare/start")
@@ -3895,9 +4027,14 @@ def api_admin_ngrok_start():
     if not status["available"]:
         return jsonify({"ok": False, "error": status["error"], "status": status}), 400
     if not status["running"]:
-        return jsonify({"ok": False, "error": status["error"] or "Не удалось запустить Cloudflare Tunnel", "status": status}), 500
+        return jsonify({"ok": False, "error": status["error"] or "Не удалось запустить туннель", "status": status}), 500
     log_action(session.get("user_id"), "admin_tunnel_start", {"provider": status.get("provider"), "public_url": status["public_url"], "pid": status["pid"]})
-    provider_label = "Cloudflare Tunnel" if status.get("provider") == "cloudflare_quick_tunnel" else "localhost.run Tunnel"
+    provider_name_map = {
+        "cloudflare_quick_tunnel": "Cloudflare Tunnel",
+        "pinggy": "Pinggy Tunnel",
+        "localhost_run": "localhost.run Tunnel",
+    }
+    provider_label = provider_name_map.get(str(status.get("provider") or "").lower(), "Tunnel")
     return jsonify({"ok": True, "message": f"{provider_label} запущен", "status": status})
 
 

@@ -1629,7 +1629,17 @@
             <div class="card">
               <h3>Cloudflare Tunnel</h3>
               <div class="muted" style="margin-top:8px;">Только для админки 7 уровня (Создатель). Даст внешний адрес для входа в NM-Bank.</div>
-              <div class="muted" style="margin-top:6px;">Один клик как ngrok: сначала Cloudflare Quick Tunnel, если недоступен — автофолбэк на localhost.run.</div>
+              <div class="muted" style="margin-top:6px;">Выбери провайдера: Cloudflare, Pinggy, localhost.run или авто-подбор.</div>
+              <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <select id="adminNgrokProviderSelect" style="max-width:360px;">
+                  <option value="auto">Авто (Cloudflare - Pinggy - localhost.run)</option>
+                  <option value="cloudflare_quick_tunnel">Cloudflare Quick Tunnel</option>
+                  <option value="pinggy">Pinggy SSH Tunnel</option>
+                  <option value="localhost_run">localhost.run SSH Tunnel</option>
+                </select>
+                <button id="adminNgrokProviderSaveBtn" class="btn secondary" type="button">Применить провайдер</button>
+              </div>
+              <div id="adminNgrokProviderHint" class="muted" style="margin-top:6px;">-</div>
               <div style="margin-top:12px; display:grid; gap:8px;">
                 <div>Статус: <b id="adminNgrokState">-</b></div>
                 <div>Ссылка: <a id="adminNgrokUrlLink" href="#" target="_blank" rel="noopener">-</a></div>
@@ -1885,6 +1895,9 @@
       adminNgrokStartBtn: document.getElementById('adminNgrokStartBtn'),
       adminNgrokStopBtn: document.getElementById('adminNgrokStopBtn'),
       adminNgrokRefreshBtn: document.getElementById('adminNgrokRefreshBtn'),
+      adminNgrokProviderSelect: document.getElementById('adminNgrokProviderSelect'),
+      adminNgrokProviderSaveBtn: document.getElementById('adminNgrokProviderSaveBtn'),
+      adminNgrokProviderHint: document.getElementById('adminNgrokProviderHint'),
       adminSubtabButtons: Array.from(document.querySelectorAll('.admin-subtab-btn')),
       adminSubtabs: Array.from(document.querySelectorAll('.admin-tab')),
       adminGrantForm: document.getElementById('adminGrantForm'),
@@ -3277,7 +3290,34 @@
         ? 'Cloudflare'
         : (provider === 'localhost_run'
           ? 'localhost.run'
-          : (provider === 'serveo' ? 'Serveo' : 'Tunnel'));
+          : (provider === 'pinggy'
+            ? 'Pinggy'
+            : (provider === 'serveo' ? 'Serveo' : 'Tunnel')));
+      const preferredProvider = String(ngrok.preferred_provider || 'auto');
+      const providerOptions = Array.isArray(ngrok.provider_options) ? ngrok.provider_options : [];
+      if (els.adminNgrokProviderSelect) {
+        const hasOption = Array.from(els.adminNgrokProviderSelect.options).some(opt => opt.value === preferredProvider);
+        els.adminNgrokProviderSelect.value = hasOption ? preferredProvider : 'auto';
+      }
+      const availableProviderLabels = providerOptions
+        .filter(opt => Boolean(opt && opt.available))
+        .map(opt => String(opt.label || opt.key || '').trim())
+        .filter(Boolean);
+      const selectedProviderInfo = providerOptions.find(opt => String(opt.key || '') === preferredProvider);
+      const selectedProviderAvailable = preferredProvider === 'auto'
+        ? Boolean(ngrok.available)
+        : Boolean(selectedProviderInfo && selectedProviderInfo.available);
+      if (els.adminNgrokProviderHint) {
+        if (!providerOptions.length) {
+          els.adminNgrokProviderHint.textContent = 'Провайдеры туннеля еще не загружены.';
+        } else if (!selectedProviderAvailable) {
+          els.adminNgrokProviderHint.textContent = 'Выбранный провайдер сейчас недоступен. Смените провайдер или включите Авто.';
+        } else if (availableProviderLabels.length) {
+          els.adminNgrokProviderHint.textContent = `Доступно сейчас: ${availableProviderLabels.join(', ')}`;
+        } else {
+          els.adminNgrokProviderHint.textContent = 'Сейчас нет доступных туннель-клиентов (cloudflared/ssh).';
+        }
+      }
       const rawUrl = String(ngrok.public_url || '').trim();
       let rawHost = '';
       try {
@@ -3309,6 +3349,8 @@
       els.adminNgrokStartBtn.disabled = !canUseNgrok || !ngrok.available || (Boolean(ngrok.running) && !hasBrokenRunningState);
       els.adminNgrokStartBtn.textContent = hasBrokenRunningState ? 'Перезапустить Tunnel' : 'Включить Tunnel';
       els.adminNgrokStopBtn.disabled = !canUseNgrok || !Boolean(ngrok.running);
+      if (els.adminNgrokProviderSelect) els.adminNgrokProviderSelect.disabled = !canUseNgrok;
+      if (els.adminNgrokProviderSaveBtn) els.adminNgrokProviderSaveBtn.disabled = !canUseNgrok;
 
       const econ = state.adminEconomy || {};
       els.adminUsdRateValue.textContent = econ.usd_rate ? fmtRate(econ.usd_rate) : '-';
@@ -3681,6 +3723,14 @@
       const res = await api('/api/admin/ngrok/status');
       state.ngrokStatus = res.status || null;
       renderAdmin();
+    }
+
+    async function setNgrokProvider() {
+      const provider = String(els.adminNgrokProviderSelect?.value || 'auto');
+      const res = await api('/api/admin/ngrok/provider', { method: 'POST', body: { provider } });
+      state.ngrokStatus = res.status || state.ngrokStatus || null;
+      renderAdmin();
+      showToast(res.message || 'Провайдер туннеля обновлен');
     }
 
     async function startNgrok() {
@@ -4464,6 +4514,13 @@
         try {
           await refreshNgrokStatus();
           showToast('Статус туннеля обновлён');
+        } catch (err) {
+          showToast(err.message, 'bad');
+        }
+      });
+      els.adminNgrokProviderSaveBtn.addEventListener('click', async () => {
+        try {
+          await setNgrokProvider();
         } catch (err) {
           showToast(err.message, 'bad');
         }

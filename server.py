@@ -763,6 +763,18 @@ def get_ngrok_status() -> Dict[str, Any]:
                     ip = socket.gethostbyname(host)
                 except OSError:
                     ip = None
+        status_error = NGROK_LAST_ERROR
+        if running and public_url and status_error:
+            lowered = str(status_error).lower()
+            transient_tokens = (
+                "quic",
+                "tls handshake",
+                "retrying connection",
+                "serve tunnel error",
+                "timeout: no recent network activity",
+            )
+            if any(token in lowered for token in transient_tokens):
+                status_error = None
 
         return {
             "provider": NGROK_PROVIDER,
@@ -778,7 +790,7 @@ def get_ngrok_status() -> Dict[str, Any]:
             "public_host": host,
             "public_ip": ip,
             "started_at": NGROK_STARTED_AT if running else None,
-            "error": NGROK_LAST_ERROR,
+            "error": status_error,
         }
 
 
@@ -793,30 +805,26 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
             return get_ngrok_status()
 
         ssh_exe = _find_ssh_executable()
-        cmd: Optional[List[str]] = None
-        selected = normalize_tunnel_provider(NGROK_PREFERRED_PROVIDER)
-        for candidate in tunnel_provider_candidates(selected):
-            if candidate == "cloudflare_quick_tunnel" and cloudflared_exe:
-                NGROK_PROVIDER = "cloudflare_quick_tunnel"
-                cmd = [
+
+        def build_tunnel_cmd(provider_key: str) -> Optional[List[str]]:
+            if provider_key == "cloudflare_quick_tunnel" and cloudflared_exe:
+                return [
                     cloudflared_exe,
                     "tunnel",
                     "--url",
                     f"http://127.0.0.1:{NGROK_PORT}",
+                    "--protocol",
+                    "http2",
                     "--no-autoupdate",
                 ]
-                break
-            if candidate == "pinggy" and ssh_exe:
-                NGROK_PROVIDER = "pinggy"
-                cmd = [
+            if provider_key == "pinggy" and ssh_exe:
+                return [
                     ssh_exe,
                     "-T",
                     "-p",
                     "443",
                     "-o",
                     "StrictHostKeyChecking=no",
-                    "-o",
-                    "LogLevel=ERROR",
                     "-o",
                     "ExitOnForwardFailure=yes",
                     "-o",
@@ -827,16 +835,12 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
                     f"0:127.0.0.1:{NGROK_PORT}",
                     f"qr@{PINGGY_HOST}",
                 ]
-                break
-            if candidate == "localhost_run" and ssh_exe:
-                NGROK_PROVIDER = "localhost_run"
-                cmd = [
+            if provider_key == "localhost_run" and ssh_exe:
+                return [
                     ssh_exe,
                     "-T",
                     "-o",
                     "StrictHostKeyChecking=no",
-                    "-o",
-                    "LogLevel=ERROR",
                     "-o",
                     "ExitOnForwardFailure=yes",
                     "-o",
@@ -847,6 +851,15 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
                     f"80:127.0.0.1:{NGROK_PORT}",
                     f"nokey@{LOCALHOST_RUN_HOST}",
                 ]
+            return None
+
+        cmd: Optional[List[str]] = None
+        selected = normalize_tunnel_provider(NGROK_PREFERRED_PROVIDER)
+        for candidate in tunnel_provider_candidates(selected):
+            built = build_tunnel_cmd(candidate)
+            if built:
+                NGROK_PROVIDER = candidate
+                cmd = built
                 break
 
         if not cmd:
@@ -892,6 +905,8 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
         if status["public_url"]:
             break
 
+    fallback_to_localhost = False
+    fallback_reason = ""
     with NGROK_LOCK:
         if NGROK_PROCESS is None:
             NGROK_LAST_ERROR = NGROK_LAST_ERROR or "Туннель не запущен."
@@ -907,7 +922,52 @@ def start_ngrok_tunnel() -> Dict[str, Any]:
         if NGROK_PUBLIC_URL:
             NGROK_LAST_ERROR = None
         else:
-            NGROK_LAST_ERROR = "Tunnel запущен, но публичная ссылка ещё не получена. Подождите 2-5 секунд и обновите статус."
+            fallback_to_localhost = bool(ssh_exe and NGROK_PROVIDER != "localhost_run")
+            if fallback_to_localhost:
+                fallback_reason = f"Провайдер {NGROK_PROVIDER} не дал публичную ссылку, выполнен авто-фолбэк на localhost.run."
+            else:
+                NGROK_LAST_ERROR = "Tunnel запущен, но публичная ссылка ещё не получена. Подождите 2-5 секунд и обновите статус."
+
+    if fallback_to_localhost:
+        stop_ngrok_tunnel()
+        with NGROK_LOCK:
+            fallback_cmd = build_tunnel_cmd("localhost_run")
+            if not fallback_cmd:
+                NGROK_LAST_ERROR = fallback_reason
+                return get_ngrok_status()
+            NGROK_PROVIDER = "localhost_run"
+            NGROK_PUBLIC_URL = None
+            NGROK_LAST_ERROR = None
+            NGROK_STARTED_AT = None
+            with NGROK_LOG_LOCK:
+                NGROK_LOG_LINES.clear()
+            try:
+                NGROK_PROCESS = subprocess.Popen(
+                    fallback_cmd,
+                    cwd=BASE_DIR,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                    bufsize=1,
+                )
+            except OSError as exc:
+                NGROK_PROCESS = None
+                NGROK_LAST_ERROR = f"{fallback_reason} Не удалось запустить localhost.run: {exc}"
+                return get_ngrok_status()
+            NGROK_STARTED_AT = to_iso(now_utc())
+            NGROK_READER_THREAD = threading.Thread(target=_tunnel_reader, args=(NGROK_PROCESS,), daemon=True)
+            NGROK_READER_THREAD.start()
+        for _ in range(40):
+            time.sleep(0.25)
+            status = get_ngrok_status()
+            if not status["running"]:
+                break
+            if status["public_url"]:
+                with NGROK_LOCK:
+                    NGROK_LAST_ERROR = fallback_reason
+                break
     return get_ngrok_status()
 
 
